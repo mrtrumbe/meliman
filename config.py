@@ -4,62 +4,63 @@ import random
 import string
 from ConfigParser import NoOptionError
 
-def init():
-    global config
-    global config_files
+class ConfigException(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return str(self.message)
 
-    config = ConfigParser.ConfigParser()
-    p = os.path.dirname(__file__)
-    config_files = [
-        '/etc/media_library_manager.conf',
-        os.path.join(p, 'media_library_manager.conf'),
-        ]
+class MelimanConfig:
+    def __init__(self):
+        self.config = ConfigParser.ConfigParser()
+        p = os.path.dirname(__file__)
+        self.config_files = [
+            '/etc/meliman.conf',
+            os.path.join(p, 'meliman.conf'),
+            ]
 
-    config_exists = False
-    for config_file in config_files:
-        if  os.path.exists(config_file):
-            config_exists = True
+        config_exists = False
+        for config_file in self.config_files:
+            if  os.path.exists(config_file):
+                config_exists = True
 
-    if not config_exists:
-        print 'ERROR:  media_library_manager.conf does not exist.\n' + \
-              'You must create this file before running media_library_manager.'
-        return 1
+        if not config_exists:
+            raise ConfigException('ERROR:  meliman.conf does not exist.\n' + \
+                  'You must create this file in the application directory before running meliman.')
 
-    config.read(config_files)
-    return 0
+        self.config.read(self.config_files)
 
-def reset():
-    global config
-    del config
-    config = ConfigParser.ConfigParser()
-    config.read(config_files)
+    def reset(self):
+        self.config = ConfigParser.ConfigParser()
+        self.config.read(self.config_files)
 
-def getDatabaseFile():
-    return config.get('Database', 'file')
+    def getDatabaseFile(self):
+        return self.config.get('Database', 'file')
 
-def getLibraryInputPath():
-    return config.get('Library', 'input_path')
+    def getLibraryInputPath(self):
+        return self.config.get('Library', 'input_path')
 
-def getLibraryTvPath():
-    return config.get('Library', 'tv_path')
+    def getLibraryTvPath(self):
+        return self.config.get('Library', 'tv_path')
 
-def getLibraryFormat():
-    return config.get('Library', 'format')
+    def getLibraryFormat(self):
+        return self.config.get('Library', 'format')
 
-def getLibraryRecentPath():
-    return config.get('Library', 'recent_path')
+    def getLibraryRecentPath(self):
+        return self.config.get('Library', 'recent_path')
 
-def getLibraryRecentDurationInMinutes():
-    return config.get('Library', 'recent_duration_in_minutes')
+    def getLibraryRecentDurationInMinutes(self):
+        return self.config.get('Library', 'recent_duration_in_minutes')
 
-def getMediaFileExtensions():
-    return config.get('Miscellaneous', 'media_file_extensions')
+    def getMediaFileExtensions(self):
+        return self.config.get('Miscellaneous', 'media_file_extensions')
 
-def getLockFile():
-    return config.get('Miscellaneous', 'lock_file')
+    def getLockFile(self):
+        return self.config.get('Miscellaneous', 'lock_file')
 
-def getTitleWordsToIgnore():
-    return config.get('Miscellaneous', 'title_words_to_ignore')
+    def getTitleWordsToIgnore(self):
+        return self.config.get('Miscellaneous', 'title_words_to_ignore')
 
-def getTitleCharsToIgnore():
-    return config.get('Miscellaneous', 'title_chars_to_ignore')
+    def getTitleCharsToIgnore(self):
+        return self.config.get('Miscellaneous', 'title_chars_to_ignore')
+

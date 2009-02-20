@@ -9,7 +9,7 @@ import traceback
 from optparse import OptionParser, OptionGroup
 from datetime import datetime
 
-import config
+from config import MelimanConfig
 import database
 import file_manager
 import metadata
@@ -17,7 +17,7 @@ import thetvdb
 
 
 def main():
-    config.init()
+    config = MelimanConfig()
 
     (options, args) = parse_options()
 

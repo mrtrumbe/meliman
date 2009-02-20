@@ -3,7 +3,7 @@
 # The location of the database file for locally caching metadata.
 #   Make sure this file is writable by the user running the application.
 
-file=/src/media_library_manager/tmp/metadata.db
+file=/src/meliman/tmp/metadata.db
 
 
 
@@ -19,21 +19,21 @@ format=pyTivo
 #   and will process any media files matching watched series
 #   and movies
 
-input_path=/src/media_library_manager/tmp/input
+input_path=/src/meliman/tmp/input
 
 
 # This is the library folder for TV shows imported by
 #   the application.  The application will 'own'
 #   this folder, so don't try to change its contents.
 
-tv_path=/src/media_library_manager/tmp/tv
+tv_path=/src/meliman/tmp/tv
 
 
 # This is the library folder for recent media files 
 #   imported by the application.  The application will 
 #   'own' this folder, so don't try to change its contents.
 
-recent_path=/src/media_library_manager/tmp/recent
+recent_path=/src/meliman/tmp/recent
 
 
 # This tells the application how long to keep newly added media
@@ -57,7 +57,7 @@ recent_duration_in_minutes=5
 #   the application is running at a time. Make sure this file is 
 #   writable by the user running the application.
 
-lock_file=/src/media_library_manager/tmp/process_lock.txt
+lock_file=/src/meliman/tmp/process_lock.txt
 
 
 # Any files ending with one of these extension is considered a media file.
