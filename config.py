@@ -25,9 +25,8 @@ class MelimanConfig:
                 config_exists = True
 
         if not config_exists:
-            raise ConfigException('ERROR:  meliman.conf does not exist.\n' + \
-                  'You must create this file in the application directory before running meliman.')
-
+            raise ConfigException('meliman.conf does not exist.' + \
+                  'You must create this file in the application directory before running meliman.') 
         self.config.read(self.config_files)
 
     def reset(self):
