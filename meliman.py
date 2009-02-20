@@ -12,7 +12,7 @@ from datetime import datetime
 from config import MelimanConfig
 from thetvdb import TheTvDb
 from database import Database
-import file_manager
+from file_manager import FileManager
 import metadata
 
 
@@ -259,7 +259,7 @@ def do_cleanup_file_name(input_file_name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
         database = Database(config)
-        file_manager.init(config)
+        file_manager = FileManager(config, database, thetvdb)
 
         file_info = file_manager.get_info_for_file(input_file_name, debug)
         if file_info is None:
@@ -280,7 +280,7 @@ def do_metadata(input_file_path, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
         database = Database(config)
-        file_manager.init(config)
+        file_manager = FileManager(config, database, thetvdb)
 
         file_info = file_manager.get_info_for_file(input_file_path, debug)
         if file_info is None:
@@ -311,7 +311,7 @@ def do_generate(input_directory, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
         database = Database(config)
-        file_manager.init(config)
+        file_manager = FileManager(config, database, thetvdb)
 
         files = []
         for root, dir, files_to_add in os.walk(input_directory):
@@ -327,7 +327,7 @@ def do_generate(input_directory, config, debug):
         traceback.print_exc()
         return 11
 
-def generate_for_file(root, file, debug):
+def generate_for_file(file_manager, root, file, debug):
     try:
         file_path = os.path.join(root, file)
         file_info = file_manager.get_info_for_file(file, debug)
@@ -354,7 +354,7 @@ def do_regenerate(config, debug):
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
     database = Database(config)
-    file_manager.init(config)
+    file_manager = FileManager(config, database, thetvdb)
 
     lock = file_manager.get_process_lock()
 
@@ -384,7 +384,7 @@ def do_process(config, debug, move):
             for (root, file) in files:
                 file_path = os.path.join(root, file)
                 if os.path.isfile(file_path):
-                    process_file(file_path, tv_path, debug, move)
+                    process_file(file_manager, file_path, tv_path, debug, move)
 
             file_manager.cleanup_recent_folder()
         except:
@@ -394,7 +394,7 @@ def do_process(config, debug, move):
             file_manager.relinquish_process_lock()
 
 
-def process_file(input_file_path, tv_path, debug, move):
+def process_file(file_manager, input_file_path, tv_path, debug, move):
     try:
         file_info = file_manager.get_info_for_file(input_file_path, debug)
         if file_info is None:
@@ -423,7 +423,7 @@ def process_file(input_file_path, tv_path, debug, move):
                 return 
     except:
         traceback.print_exc()
-        print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_name, 
+        print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
 
 
 if __name__ == "__main__":
