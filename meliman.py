@@ -11,7 +11,7 @@ from datetime import datetime
 
 from config import MelimanConfig
 from thetvdb import TheTvDb
-import database
+from database import Database
 import file_manager
 import metadata
 
@@ -105,7 +105,7 @@ def do_action(options, args, config, debug, move):
 def do_series_lookup(name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
 
         results = thetvdb.lookup_series_info(name, debug)
 
@@ -122,7 +122,7 @@ def do_series_lookup(name, config, debug):
 def do_episode_lookup(episode_search_pattern, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
 
         split_pattern = episode_search_pattern.split(':')
 
@@ -152,7 +152,7 @@ def do_episode_lookup(episode_search_pattern, config, debug):
             season = int(split_pattern[1])
             episode = int(split_pattern[2])
 
-            result = get_specific_episode(thetvdb, series, season, episode, debug)
+            result = get_specific_episode(thetvdb, database, series, season, episode, debug)
             if result is None:
                 print "Could not locate an episode matching pattern: %s" % (episode_search_pattern, )
                 return 3
@@ -164,7 +164,7 @@ def do_episode_lookup(episode_search_pattern, config, debug):
         traceback.print_exc()
         return 11
 
-def get_specific_episode(thetvdb, series, season_number, episode_number, debug):
+def get_specific_episode(thetvdb, database, series, season_number, episode_number, debug):
     result = database.get_episode(series.id, season_number, episode_number)
     if result is None:
         result = thetvdb.get_specific_episode(series, season_number, episode_number, debug)
@@ -194,7 +194,7 @@ def do_unwatch_series(series_id_str, config, debug):
 def watch_series_guts(series_id_str, watch, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
 
         try:
             series_id = int(series_id_str)
@@ -216,7 +216,7 @@ def watch_series_guts(series_id_str, watch, config, debug):
 
 def do_list_watched_series(config, debug):
     try:
-        database.init(config)
+        database = Database(config)
 
         results = database.get_watched_series()
         print_series(results)
@@ -234,7 +234,7 @@ def print_series(series_list):
 def do_clear_episodes(series_id_str, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
 
         try:
             series_id = int(series_id_str)
@@ -258,7 +258,7 @@ def do_clear_episodes(series_id_str, config, debug):
 def do_cleanup_file_name(input_file_name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
         file_manager.init(config)
 
         file_info = file_manager.get_info_for_file(input_file_name, debug)
@@ -279,7 +279,7 @@ def do_cleanup_file_name(input_file_name, config, debug):
 def do_metadata(input_file_path, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
         file_manager.init(config)
 
         file_info = file_manager.get_info_for_file(input_file_path, debug)
@@ -310,7 +310,7 @@ def do_generate(input_directory, config, debug):
 
     try:
         thetvdb = TheTvDb(config, debug)
-        database.init(config)
+        database = Database(config)
         file_manager.init(config)
 
         files = []
@@ -353,7 +353,7 @@ def do_regenerate(config, debug):
 
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
-    database.init(config)
+    database = Database(config)
     file_manager.init(config)
 
     lock = file_manager.get_process_lock()
