@@ -1,0 +1,2 @@
+#minute	 hour	dayofmonth  month  dayofweek
+0-59/5 * * * * /Users/mrtrumbe/media_library_manager/media_library_manager.py -p >> /Users/mrtrumbe/media_library_manager/db/operation.log 2>&1

@@ -1,0 +1,78 @@
+[Database]
+
+# The location of the database file for locally caching metadata.
+#   Make sure this file is writable by the user running the application.
+
+file=/src/media_library_manager/tmp/metadata.db
+
+
+
+
+[Library]
+
+# Right now, the only valid format is pyTivo
+
+format=pyTivo
+
+
+# The application will watch this directory for new files
+#   and will process any media files matching watched series
+#   and movies
+
+input_path=/src/media_library_manager/tmp/input
+
+
+# This is the library folder for TV shows imported by
+#   the application.  The application will 'own'
+#   this folder, so don't try to change its contents.
+
+tv_path=/src/media_library_manager/tmp/tv
+
+
+# This is the library folder for recent media files 
+#   imported by the application.  The application will 
+#   'own' this folder, so don't try to change its contents.
+
+recent_path=/src/media_library_manager/tmp/recent
+
+
+# This tells the application how long to keep newly added media
+#   files in the recent additions folder
+# 1 day = 1440
+# 2 days = 2880
+# 3 days = 4320
+# 4 days = 5760
+# 5 days = 7200
+# 6 days = 8640
+# 7 days = 10080
+
+recent_duration_in_minutes=5
+
+
+
+
+[Miscellaneous]
+
+# The location of the lock file ensuring that only one instance of 
+#   the application is running at a time. Make sure this file is 
+#   writable by the user running the application.
+
+lock_file=/src/media_library_manager/tmp/process_lock.txt
+
+
+# Any files ending with one of these extension is considered a media file.
+
+media_file_extensions=avi,mpg,mpeg,mp4,m4v
+
+
+# When generating a pattern to match incoming media files against, 
+#   these words are excluded from the pattern
+
+title_words_to_ignore=a,an,at,and,the,from,with
+
+
+# When generating a pattern to match incoming media files against, 
+#   these characters are excluded from the pattern
+
+title_chars_to_ignore=,.;:/?'"-_+&[]{}|=\!@#$%^&*()`~
+
