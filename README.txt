@@ -1,6 +1,6 @@
 Meliman - A tool for organizing and tagging your media library.
 
-Current version: v0.5
+Currently unversioned.
 
 
 == FEATURES ==
@@ -11,14 +11,14 @@ Meliman is based on a "watched series" strategy: rather than guessing which
 series a file belongs to, a user first sets up a list of series which the program will then 
 watch for.  Typically, operation of Meliman will look something like this:
 
-    # ./Meliman.py -s "The Simpsons"
+    # ./meliman.py -s "The Simpsons"
     71663: The Simpsons
     79421: The Simpsons Shorts
 
-    # ./Meliman.py -w 71663
+    # ./meliman.py -w 71663
     Will now watch series 'The Simpsons'.
 
-    # ./Meliman.py -m simpsons_s4e7.avi
+    # ./meliman.py -m simpsons_s4e7.avi
     isEpisode : true
     title : Marge Gets A Job
     time : 2008-12-17T10:19:47Z
@@ -38,13 +38,17 @@ Feature list:
     - Watches an incoming directory for new media files and copies those files to the library.
     - Maintains a list of recently added media files in the library.
 
+Planned improvements:
+    - Faster performance (better thetvdb usage, better pattern matching, etc.)
+    - mp4 file tagging
+    - Ability to run meliman as a server
+    - A web-based GUI
+
 
 == INSTALLATION ==
 
 Requirements: 
     - Python 2.5 (http://www.python.org)
-    - CherryPy 3.1 or greater (Only required if you intend to run daemon mode...get 
-            cherrypy here: http://www.cherrypy.org)
 
 Installation of Meliman is pretty simple:
     - Put the Meliman folder wherever you like on your computer (referred to from
@@ -57,12 +61,8 @@ Installation of Meliman is pretty simple:
         use on your computer.  The example config file is well documented to help you make
         sensible settings.
 
-Once you have installed the application, you can immediately use the Meliman.py 
+Once you have installed the application, you can immediately use the meliman.py 
 script to operate the program.  Execute the follwing for more information:
 
-    INSTALL_PATH/Meliman.py --help
-
-Running the Meliman.py script is referred to as "manual mode".  There is also a
-daemon mode supported which will run various commands on a schedule and also provide a web
-interface for remote execution of the program.  Documentation of daemon mode is forthcoming.
+    INSTALL_PATH/meliman.py --help
 
