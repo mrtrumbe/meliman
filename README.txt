@@ -7,8 +7,8 @@ Currently unversioned.
 
 Meliman currently supports only tv series.  Support for movies is planned.
 
-Meliman is based on a "watched series" strategy: rather than guessing which 
-series a file belongs to, a user first sets up a list of series which the program will then 
+Meliman is based on a "watched series" strategy: rather than guessing which series 
+a file belongs to, a user first sets up a list of series which the program will then 
 watch for.  Typically, operation of Meliman will look something like this:
 
     # ./meliman.py -s "The Simpsons"
@@ -23,10 +23,14 @@ watch for.  Typically, operation of Meliman will look something like this:
     title : Marge Gets A Job
     time : 2008-12-17T10:19:47Z
     description: #7.  The Simpsons' house begins sinking ...
+    
+    # ./meliman.py -l
+    71663: The Simpsons
 
 Here, we first look up series matching the string "The Simpsons", then we tell 
-Meliman to watch the series based on its id, then we feed a file to 
-Meliman and have it generate metadata.  The -m option just prints the metadata.
+Meliman to watch the series based on its id, then we feed a file to Meliman and 
+have it generate metadata, and finally we list the series we are currently watching.  
+Note that the -m option just prints the metadata, it doesn't tag the file.
 
 Once you have started watching some series with Meliman, you can use Meliman to
 watch an incoming directory and copy/move media files to a library directory, tagging
