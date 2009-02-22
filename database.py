@@ -12,7 +12,9 @@ TIME_FORMAT='%Y-%m-%d %H:%M:%S'
 ORIGINAL_AIR_DATE_FORMAT='%Y-%m-%d'
 
 class Database():
-    def __init__(self, config):
+    def __init__(self, config, debug):
+        self.debug = debug
+
         database_file = config.getDatabaseFile()
         self.connection = sqlite3.connect(database_file)
 
@@ -34,10 +36,10 @@ class Database():
         finally:
             c.close()
 
-    def add_series(self, series, debug):
+    def add_series(self, series):
         existing_series = self.get_series(series.id)
         if existing_series is None:
-            if debug:
+            if self.debug:
                 print "Adding series '%s' to the local cache." % (series.title, )
 
             c = self.connection.cursor()
@@ -56,7 +58,7 @@ class Database():
                 c.close()
                 
 
-    def watch_series(self, series, watch, debug):
+    def watch_series(self, series, watch):
         existing_series = self.get_series(series.id)
         if not existing_series is None:
             c = self.connection.cursor()
@@ -98,8 +100,8 @@ class Database():
 
 
 
-    def add_episode(self, episode, series, debug):
-        if debug:
+    def add_episode(self, episode, series):
+        if self.debug:
             print "Adding season %i episode %i of series '%s' to the local cache." % (episode.season_number, episode.episode_number, series.title)
 
         c = self.connection.cursor()

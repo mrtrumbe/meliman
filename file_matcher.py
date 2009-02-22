@@ -1,3 +1,4 @@
+import os
 import re
 
 DATE_PATTERN_1='(?P<month1>\d\d)[/-_.](?P<day1>\d\d)[/-_.](?P<year1>\d\d(\d\d)?)'
@@ -8,11 +9,12 @@ FILE_PATTERN_BY_EPISODE_FOLDERS='^.*/+season[-_.\ ]*(?P<season>\d+)/+(episode[-_
 FILE_PATTERN_BY_DATE='^.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D.*$'
 
 SERIES_TITLE_SEPARATOR_PATTERN='[^\\\/]+'
+SERIES_TITLE_PATTERN='^.*%s.*$'
 
 
 class EpisodeMatch():
     def __init__(self, file_name, series, debug, season_number, episode_number):
-        self.file_name
+        self.file_name = file_name
         self.series = series
         self.debug = debug
 
@@ -22,12 +24,13 @@ class EpisodeMatch():
     def get_episode_metadata(self, database, thetvdb):
         episode = database.get_episode(self.series.id, self.season_number, self.episode_number)
         if episode is None:
-            episode = thetvdb.get_specific_episode(self.series, self.season_number, self.episode_number, self.debug)
+            episode = thetvdb.get_specific_episode(self.series, self.season_number, self.episode_number)
             if episode is None:
-                print "Season %i episode %i of series '%s' does not exist.\n" % (self.season_number, self.episode_number, self.series.title)
+                if self.debug:
+                    print "Season %i episode %i of series '%s' does not exist.\n" % (self.season_number, self.episode_number, self.series.title)
                 return None
             else:
-                database.add_episode(episode, self.series, self.debug)
+                database.add_episode(episode, self.series)
 
         return episode
 
@@ -45,33 +48,35 @@ class DateMatch():
     def get_episode_metadata(self, database, thetvdb):
         episode = database.get_episode_by_date(self.series.id, self.year, self.month, self.day)
         if episode is None:
-            episode = thetvdb.get_specific_episode_by_date(self.series, self.year, self.month, self.day, self.debug)
+            episode = thetvdb.get_specific_episode_by_date(self.series, self.year, self.month, self.day)
             if episode is None:
-                print "No episode of series '%s' was originally aired on %i-%i-%i.\n" % (self.series.title, self.year, self.month, self.day)
+                if self.debug:
+                    print "No episode of series '%s' was originally aired on %i-%i-%i.\n" % (self.series.title, self.year, self.month, self.day)
                 return None
             else:
-                database.add_episode(episode, self.series, self.debug)
+                database.add_episode(episode, self.series)
 
         return episode
 
 
 class FileMatcher():
-    def __init__(self, config, series, series_title, debug):
+    def __init__(self, config, series, debug):
         self.config = config
         self.series = series
-        self.series_title = series_title
         self.debug = debug
 
-        self.series_title_re = compile(self.build_series_title_pattern())
-        self.episode_re = compile(FILE_PATTERN_BY_EPISODE)
-        self.episode_by_folder_re = compile(FILE_PATTERN_BY_EPISODE_FOLDERS)
-        self.episode_by_date_re = compile(FILE_PATTERN_BY_DATE)
+        series_title_pattern = self.build_series_title_pattern()
+        self.series_title_re = self.compile(series_title_pattern)
+
+        self.episode_re = self.compile(FILE_PATTERN_BY_EPISODE)
+        self.episode_by_folder_re = self.compile(FILE_PATTERN_BY_EPISODE_FOLDERS)
+        self.episode_by_date_re = self.compile(FILE_PATTERN_BY_DATE)
 
     def compile(self, pattern):
         return re.compile(pattern, re.IGNORECASE)
 
     def build_series_title_pattern(self):
-        filtered_title = self.series_title
+        filtered_title = self.series.title
         chars_to_ignore = self.config.getTitleCharsToIgnore()
         words_to_ignore = self.config.getTitleWordsToIgnore()
 
@@ -85,7 +90,8 @@ class FileMatcher():
             if not tword in words_to_ignore:
                 split_filtered_title.append(tword)
 
-        return SERIES_TITLE_SEPARATOR_PATTERN.join(split_filtered_title)
+        series_name_pattern = SERIES_TITLE_SEPARATOR_PATTERN.join(split_filtered_title)
+        return SERIES_TITLE_PATTERN % (series_name_pattern, )
 
 
     def matches_series_title(self, file_path):
@@ -129,6 +135,6 @@ class FileMatcher():
 
             to_return.append(DateMatch(file_path, self.series, self.debug, year, month, day))
 
-    return to_return
+        return to_return
 
 

@@ -105,12 +105,12 @@ def do_action(options, args, config, debug, move):
 def do_series_lookup(name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
+        database = Database(config, debug)
 
-        results = thetvdb.lookup_series_info(name, debug)
+        results = thetvdb.lookup_series_info(name)
 
         for r in results:
-            database.add_series(r, debug)
+            database.add_series(r)
             print "%i: %s" % (r.id, r.title)
 
         return 0 
@@ -122,7 +122,7 @@ def do_series_lookup(name, config, debug):
 def do_episode_lookup(episode_search_pattern, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
+        database = Database(config, debug)
 
         split_pattern = episode_search_pattern.split(':')
 
@@ -138,9 +138,9 @@ def do_episode_lookup(episode_search_pattern, config, debug):
 
         existing_episode_list = database.get_all_episodes(series_id)
         if len(existing_episode_list) == 0:
-            all_episodes = thetvdb.get_full_episode_list(series, debug)
+            all_episodes = thetvdb.get_full_episode_list(series)
             for e in all_episodes:
-                database.add_episode(e, series, debug)
+                database.add_episode(e, series)
 
 
         if len(split_pattern) == 1:
@@ -152,7 +152,7 @@ def do_episode_lookup(episode_search_pattern, config, debug):
             season = int(split_pattern[1])
             episode = int(split_pattern[2])
 
-            result = get_specific_episode(thetvdb, database, series, season, episode, debug)
+            result = get_specific_episode(thetvdb, database, series, season, episode)
             if result is None:
                 print "Could not locate an episode matching pattern: %s" % (episode_search_pattern, )
                 return 3
@@ -164,14 +164,14 @@ def do_episode_lookup(episode_search_pattern, config, debug):
         traceback.print_exc()
         return 11
 
-def get_specific_episode(thetvdb, database, series, season_number, episode_number, debug):
+def get_specific_episode(thetvdb, database, series, season_number, episode_number):
     result = database.get_episode(series.id, season_number, episode_number)
     if result is None:
-        result = thetvdb.get_specific_episode(series, season_number, episode_number, debug)
+        result = thetvdb.get_specific_episode(series, season_number, episode_number)
         if result is None:
             return None
         else:
-            database.add_episode(result, series, debug)
+            database.add_episode(result, series)
 
     return result
 
@@ -194,7 +194,7 @@ def do_unwatch_series(series_id_str, config, debug):
 def watch_series_guts(series_id_str, watch, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
+        database = Database(config, debug)
 
         try:
             series_id = int(series_id_str)
@@ -204,7 +204,7 @@ def watch_series_guts(series_id_str, watch, config, debug):
 
         series = database.get_series(series_id)
         if not series is None:
-            database.watch_series(series, watch, debug)
+            database.watch_series(series, watch)
             return 0
         else:
             print "No series with id '%i' exists in the local cache.  Did you lookup the series?" % (series_id,)
@@ -216,7 +216,7 @@ def watch_series_guts(series_id_str, watch, config, debug):
 
 def do_list_watched_series(config, debug):
     try:
-        database = Database(config)
+        database = Database(config, debug)
 
         results = database.get_watched_series()
         print_series(results)
@@ -234,7 +234,7 @@ def print_series(series_list):
 def do_clear_episodes(series_id_str, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
+        database = Database(config, debug)
 
         try:
             series_id = int(series_id_str)
@@ -258,15 +258,15 @@ def do_clear_episodes(series_id_str, config, debug):
 def do_cleanup_file_name(input_file_name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
-        file_manager = FileManager(config, database, thetvdb)
+        database = Database(config, debug)
+        file_manager = FileManager(config, database, thetvdb, debug)
 
-        file_info = file_manager.get_info_for_file(input_file_name, debug)
-        if file_info is None:
+        match = file_manager.match_file(input_file_name)
+        if match is None:
             print "File name '%s' doesn't match any series on the watch list." % input_file_name, 
             return 2
         else:
-            (file_name, series, episode) = file_info
+            (file_name, series, episode) = match
 
         print file_manager.get_library_file_name(file_name, episode)
         return 0
@@ -279,17 +279,17 @@ def do_cleanup_file_name(input_file_name, config, debug):
 def do_metadata(input_file_path, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
-        file_manager = FileManager(config, database, thetvdb)
+        database = Database(config, debug)
+        file_manager = FileManager(config, database, thetvdb, debug)
 
-        file_info = file_manager.get_info_for_file(input_file_path, debug)
-        if file_info is None:
+        match = file_manager.match_file(input_file_path)
+        if match is None:
             print "File name '%s' doesn't match any series on the watch list." % input_file_path, 
             return 2
         else:
-            (file_name, series, episode) = file_info
+            (file_name, series, episode) = match
 
-        metadata = file_manager.generate_metadata(episode, debug)
+        metadata = file_manager.generate_metadata(episode)
         if metadata is None:
             print "Error generating metadata for file '%s'." % (file_name, )
             return 4
@@ -310,8 +310,8 @@ def do_generate(input_directory, config, debug):
 
     try:
         thetvdb = TheTvDb(config, debug)
-        database = Database(config)
-        file_manager = FileManager(config, database, thetvdb)
+        database = Database(config, debug)
+        file_manager = FileManager(config, database, thetvdb, debug)
 
         files = []
         for root, dir, files_to_add in os.walk(input_directory):
@@ -320,25 +320,25 @@ def do_generate(input_directory, config, debug):
                     files.append((root, file))
 
         for (root, file) in files:
-            generate_for_file(root, file, debug)
+            generate_for_file(root, file)
 
         return 0
     except:
         traceback.print_exc()
         return 11
 
-def generate_for_file(file_manager, root, file, debug):
+def generate_for_file(file_manager, root, file):
     try:
         file_path = os.path.join(root, file)
-        file_info = file_manager.get_info_for_file(file, debug)
-        if file_info is None:
+        match = file_manager.match_file(file_path)
+        if match is None:
             print "Skipping non-matching or invalid file '%s'.\n" % file_path, 
             return
         else:
-            (file_name, series, episode) = file_info
+            (file_name, series, episode) = match
 
-        file_manager.clear_existing_metadata(root, file, debug)
-        if not file_manager.write_metadata(root, file, episode, debug):
+        file_manager.clear_existing_metadata(root, file)
+        if not file_manager.write_metadata(root, file, episode):
             print "Error writing metadata.\n"
 
     except:
@@ -353,8 +353,8 @@ def do_regenerate(config, debug):
 
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
-    database = Database(config)
-    file_manager = FileManager(config, database, thetvdb)
+    database = Database(config, debug)
+    file_manager = FileManager(config, database, thetvdb, debug)
 
     lock = file_manager.get_process_lock()
 
@@ -396,12 +396,14 @@ def do_process(config, debug, move):
 
 def process_file(file_manager, input_file_path, tv_path, debug, move):
     try:
-        file_info = file_manager.get_info_for_file(input_file_path, debug)
-        if file_info is None:
-            print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
+        match = file_manager.match_file(input_file_path)
+        if match is None:
+            if debug:
+                print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
+
             return
         else:
-            (file_name, series, episode) = file_info
+            (file_name, series, episode) = match
 
         library_path = file_manager.get_library_path(tv_path, episode)
         library_file_name = file_manager.get_library_file_name(file_name, episode)
@@ -414,7 +416,7 @@ def process_file(file_manager, input_file_path, tv_path, debug, move):
                 print "Error copying media to library.\n"
                 return 
             
-            if not file_manager.write_metadata(library_path, library_file_name, episode, debug):
+            if not file_manager.write_metadata(library_path, library_file_name, episode):
                 print "Error writing metadata to library.\n"
                 return 
             

@@ -58,8 +58,9 @@ class MelimanConfig:
         return self.config.get('Miscellaneous', 'lock_file')
 
     def getTitleWordsToIgnore(self):
-        return self.config.get('Miscellaneous', 'title_words_to_ignore')
+        words_to_ignore_str = self.config.get('Miscellaneous', 'title_words_to_ignore')
+        return [w.strip() for w in words_to_ignore_str.split(',')]
 
     def getTitleCharsToIgnore(self):
-        return self.config.get('Miscellaneous', 'title_chars_to_ignore')
+        return self.config.get('Miscellaneous', 'title_chars_to_ignore').strip()
 

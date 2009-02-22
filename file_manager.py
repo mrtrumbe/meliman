@@ -8,6 +8,7 @@ from datetime import datetime
 import config
 import database
 import thetvdb
+from file_matcher import FileMatcher
 
 RECENT_ADDITIONS = "_Recent Additions"
 
@@ -23,9 +24,10 @@ FILE_PATTERN_BY_DATE='^.*%s.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D
 FILE_NAME='%s-s%02i_e%03i.%s'
 
 class FileManager():
-    def __init__(self, config, database, thetvdb):
+    def __init__(self, config, database, thetvdb, debug):
         self.database = database
         self.thetvdb = thetvdb
+        self.debug = debug
 
         self.lock_file_path = config.getLockFile()
         self.recent_duration_in_minutes = config.getLibraryRecentDurationInMinutes()
@@ -34,117 +36,35 @@ class FileManager():
         self.media_file_extension_str = config.getMediaFileExtensions()
         self.file_extensions = self.media_file_extension_str.split(',')
 
-        self.words_to_ignore_str = config.getTitleWordsToIgnore()
-        self.words_to_ignore = [w.strip() for w in self.words_to_ignore_str.split(',')]
-
-        self.chars_to_ignore = config.getTitleCharsToIgnore().strip()
-
         self.format = config.getLibraryFormat()
+
+        # create FileMatcher objects for each watched series
+        self.file_matchers = []
+        watched_series = self.database.get_watched_series()
+        for series in watched_series:
+            self.file_matchers.append(FileMatcher(config, series, debug))
 
 
     # returns a tuple of the form: (file_name, series, episode)
-    def get_info_for_file(self, file_path, debug):
-        (dir_name, file_name) = os.path.split(file_path)
-        dir_name=dir_name.replace('\\', '/')
-        converted_file_name = dir_name + '/' + file_name
+    def match_file(self, file_path):
+        for file_matcher in self.file_matchers:
+            if file_matcher.matches_series_title(file_path):
+                if self.debug:
+                    print "File '%s' matches series '%s'." % (file_path, file_matcher.series.title)
 
-        if debug:
-            print "Working with file: %s" % converted_file_name
-
-        if self.is_media_file(file_name):
-            series = self.database.get_watched_series()
-            for s in series:
-                filtered_title = s.title
-                for c in self.chars_to_ignore:
-                    filtered_title = filtered_title.replace(c, ' ')
-
-                split_title = [w.strip().lower() for w in filtered_title.split(' ')]
-                split_filtered_title = []
-                for tword in split_title:
-                    if not tword in self.words_to_ignore:
-                        split_filtered_title.append(tword)
-
-                split_filtered_title = '.*'.join(split_filtered_title)
-
-                # First try to match by season and episode number
-                reg_ex_str = FILE_PATTERN_BY_EPISODE % split_filtered_title
-
-                if debug:
-                    print "Attempting to match against pattern: %s\n" % reg_ex_str, 
-
-                match = re.match(reg_ex_str, file_name, re.I)
-                
-                # If we don't match the first episode pattern, try the folder version
-                if not match:
-                    reg_ex_str = FILE_PATTERN_BY_EPISODE_FOLDERS % split_filtered_title
-
-                    if debug:
-                        print "Attempting to match against pattern: %s\n" % reg_ex_str, 
-
-                    match = re.match(reg_ex_str, converted_file_name, re.I)
-     
-                if match:
-                    if debug:
-                        print "File matches series '%s'" % s.title
-
-                    season_number = int(match.group('season'))
-                    episode_number = int(match.group('episode'))
-
-                    episode = self.database.get_episode(s.id, season_number, episode_number)
-                    if episode is None:
-                        episode = self.thetvdb.get_specific_episode(s, season_number, episode_number, debug)
-                        if episode is None:
-                            print "Season %i episode %i of series '%s' does not exist.\n" % (season_number, episode_number, s.title)
-                            return None
-                        else:
-                            self.database.add_episode(episode, s, debug)
-
-                    return (file_name, s, episode)
-
-                # If that fails to match, try matching by date
-                reg_ex_str = FILE_PATTERN_BY_DATE % split_filtered_title
-
-                if debug:
-                    print "Attempting to match against pattern: %s\n" % reg_ex_str, 
-
-                match = re.match(reg_ex_str, file_name, re.I)
-                if match:
-                    if debug:
-                        print "File matches series '%s'" % s.title
-
-                    if not match.group('year1') is None:
-                        year = self.get_four_digit_year(int(match.group('year1')))
-                        month = int(match.group('month1'))
-                        day = int(match.group('day1'))
-                    else:
-                        year = self.get_four_digit_year(int(match.group('year2')))
-                        month = int(match.group('month2'))
-                        day = int(match.group('day2'))
-
-                    episode = self.database.get_episode_by_date(s.id, year, month, day)
-                    if episode is None:
-                        episode = self.thetvdb.get_specific_episode_by_date(s, year, month, day, debug)
-                        if episode is None:
-                            print "No episode of series '%s' was originally aired on %i-%i-%i.\n" % (s.title, year, month, day)
-                            return None
-                        else:
-                            self.database.add_episode(episode, s, debug)
-
-                    return (file_name, s, episode)
-
-     
-            return None
-        else:
-            if debug:
-                print "The provided file is not recognized as a media file by the application."
-
-            return None
+                matches = file_matcher.match_episode(file_path)
+                for match in matches:
+                    episode = match.get_episode_metadata(self.database, self.thetvdb)
+                    if episode:
+                        return (match.file_name, match.series, episode)
+        
+        # if no matcher matches the file (or if matched episode doesn't exist), return None
+        return None
 
 
-
-    def generate_metadata(self, episode, debug):
+    def generate_metadata(self, episode):
         if self.format == 'pyTivo':
-            if debug:
+            if self.debug:
                 print 'Generating metadata for \'%s\' season %i episode %i in pyTivo format' % (episode.series.title, episode.season_number, episode.episode_number)
 
             unformatted_metadata = episode.format_for_pyTivo(datetime.now())
@@ -182,7 +102,7 @@ class FileManager():
             return False
 
 
-    def clear_existing_metadata(self, library_path, library_file_name, debug):
+    def clear_existing_metadata(self, library_path, library_file_name):
         media_file_path = os.path.join(library_path, library_file_name)
         if self.format == 'pyTivo':
             meta_file_path = media_file_path + PY_TIVO_METADATA_EXT
@@ -193,14 +113,14 @@ class FileManager():
             os.remove(meta_file_path)
 
 
-    def write_metadata(self, library_path, library_file_name, episode, debug):
+    def write_metadata(self, library_path, library_file_name, episode):
         media_file_path = os.path.join(library_path, library_file_name)
         if self.format == 'pyTivo':
             meta_file_path = media_file_path + PY_TIVO_METADATA_EXT
         else:
             return False
 
-        metadata = self.generate_metadata(episode, debug)
+        metadata = self.generate_metadata(episode)
         if metadata is None:
             return False
         else:

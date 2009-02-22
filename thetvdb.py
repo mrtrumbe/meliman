@@ -21,6 +21,8 @@ API_KEY = "0403764A0DA51955"
 class TheTvDb:
     # this finds an acceptable mirror for future thetvdb requests.
     def __init__(self, config, debug):
+        self.debug = debug
+
         full_url = MIRROR_URL % (API_KEY, )
 
         mirrors_xml = parse(urllib2.urlopen(full_url))
@@ -32,33 +34,33 @@ class TheTvDb:
         mirror = mirrors[mirror_to_get]
         self.active_mirror = mirror.findtext('mirrorpath')
 
-        if debug:
+        if self.debug:
             print "Using thetvdb mirror: %s" % (self.active_mirror, )
 
 
 
     # returns an integer timestamp
-    def get_server_time(self, debug):
+    def get_server_time(self):
         full_url = self.active_mirror + SERVER_TIME_URL % (API_KEY, )
 
-        if debug:
+        if self.debug:
             print "Getting data for url: %s" % full_url
 
         series_xml = parse(urllib2.urlopen(full_url))
         data_element = series_xml.getroot()
         to_return = int(data_element.attrib['time'])
 
-        if debug:
+        if self.debug:
             print "    result: %i" % to_return
 
         return to_return
 
 
     # returns a metadata.Series object
-    def lookup_series_info(self, name, debug):
+    def lookup_series_info(self, name):
         full_url = self.active_mirror + SERIES_LOOKUP_URL % (name.strip().replace(' ', '%20'),)
 
-        if debug:
+        if self.debug:
             print "Getting data for url: %s" % full_url
 
         series_xml = parse(urllib2.urlopen(full_url))
@@ -73,7 +75,7 @@ class TheTvDb:
             for full_s in full_series_xml.findall('Series'):
                 full_series.append(full_s)
             
-        if debug:
+        if self.debug:
             print "    found %i series:" % len(full_series)
 
         to_return = []
@@ -82,41 +84,41 @@ class TheTvDb:
             s_obj = self.parse_series_xml(s)
             to_return.append(s_obj)
 
-            if debug:
+            if self.debug:
                 print "    found series '%s'" % s_obj.title
 
         return to_return
 
 
     # returns a list of metadata.Episode objects: 
-    def get_full_episode_list(self, series, debug):
+    def get_full_episode_list(self, series):
         full_url = self.active_mirror + EPISODE_HISTORY_URL % (API_KEY, series.id)
 
-        if debug:
+        if self.debug:
             print "Getting data for url: %s" % full_url
 
         zip_stream = urllib2.urlopen(full_url)
-        zip_file_string = self.create_string_from_stream(zip_stream, debug)
+        zip_file_string = self.create_string_from_stream(zip_stream)
         local_stream = StringIO.StringIO(zip_file_string)
         zip_file = zipfile.ZipFile(local_stream)
 
         episode_xml = zip_file.read('en.xml')
-        to_return = self.parse_episode_xml(episode_xml, series, debug)
+        to_return = self.parse_episode_xml(episode_xml, series)
 
         return to_return
 
 
     # returns a metadata.Episode object
-    def get_specific_episode(self, series, season_number, episode_number, debug):
+    def get_specific_episode(self, series, season_number, episode_number):
         full_url = self.active_mirror + EPISODE_URL % (API_KEY, series.id, season_number, episode_number)
 
-        if debug:
+        if self.debug:
             print "Getting data for url: %s" % full_url
 
         try:
             xml_stream = urllib2.urlopen(full_url)
-            xml_file_string = self.create_string_from_stream(xml_stream, debug)
-            to_return = self.parse_episode_xml(xml_file_string, series, debug)
+            xml_file_string = self.create_string_from_stream(xml_stream)
+            to_return = self.parse_episode_xml(xml_file_string, series)
 
             return to_return[0]
         except urllib2.HTTPError:
@@ -124,17 +126,17 @@ class TheTvDb:
 
 
     # returns a metadata.Episode object
-    def get_specific_episode_by_date(self, series, year, month, day, debug):
+    def get_specific_episode_by_date(self, series, year, month, day):
         formatted_date='%i-%i-%i' % (year, month, day)
         full_url = self.active_mirror + EPISODE_LOOKUP_BY_DATE_URL % (API_KEY, series.id, formatted_date)
 
-        if debug:
+        if self.debug:
             print "Getting data for url: %s" % full_url
 
         try:
             xml_stream = urllib2.urlopen(full_url)
-            xml_file_string = self.create_string_from_stream(xml_stream, debug)
-            to_return = self.parse_episode_xml(xml_file_string, series, debug)
+            xml_file_string = self.create_string_from_stream(xml_stream)
+            to_return = self.parse_episode_xml(xml_file_string, series)
 
             return to_return[0]
         except urllib2.HTTPError:
@@ -143,7 +145,7 @@ class TheTvDb:
 
 
 
-    def create_string_from_stream(self, stream, debug):
+    def create_string_from_stream(self, stream):
         to_return = ''
 
         try:
@@ -172,7 +174,7 @@ class TheTvDb:
 
 
 
-    def parse_episode_xml(self, xml_string, series, debug):
+    def parse_episode_xml(self, xml_string, series):
         xml_stream = StringIO.StringIO(xml_string)
         xml_object = parse(xml_stream)
         episodes = [Episode for Episode in xml_object.findall('Episode')]
@@ -198,7 +200,7 @@ class TheTvDb:
             episode_metadata.guest_stars = self.get_string_list(episode, 'GuestStars', '|', [])
 
             episode_metadata.original_air_date = self.get_datetime(episode, 'FirstAired', 
-                    None, debug)
+                    None)
             episode_metadata.time = datetime.now()
 
 
@@ -230,12 +232,12 @@ class TheTvDb:
         except:
             return default
 
-    def get_datetime(self, xml_element, sub_element_name, default, debug):
+    def get_datetime(self, xml_element, sub_element_name, default):
         try:
             date_text = xml_element.findtext(sub_element_name)
             return datetime.strptime(date_text, "%Y-%m-%d")
         except ValueError:
-            if debug:
+            if self.debug:
                 print "Error parsing string '%s' into datetime.\n" % date_text, 
             return default
         except:
