@@ -29,9 +29,10 @@ Meliman to watch the series based on its id, then we feed a file to
 Meliman and have it generate metadata.  The -m option just prints the metadata.
 
 Once you have started watching some series with Meliman, you can use Meliman to
-watch an incoming directory and copy/move media files to a library directory. To
-make this work, you'll want to properly setup entries in your configuration file.
-These three settings, in particular, are important:
+watch an incoming directory and copy/move media files to a library directory, tagging
+the file with metadata in the process.  To make this work, you'll want to properly 
+setup entries in your configuration file.  These three settings, in particular, are 
+important:
 
     input_path=/src/meliman/tmp/input
     tv_path=/src/meliman/tmp/tv
