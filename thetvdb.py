@@ -22,25 +22,30 @@ class TheTvDb:
     # this finds an acceptable mirror for future thetvdb requests.
     def __init__(self, config, debug):
         self.debug = debug
+        self.active_mirror = None
 
-        full_url = MIRROR_URL % (API_KEY, )
+    # this only needs to be called by other TheTvDb functions before they go to the server
+    def find_mirror(self):
+        if self.active_mirror is None:
+            full_url = MIRROR_URL % (API_KEY, )
 
-        mirrors_xml = parse(urllib2.urlopen(full_url))
-        mirrors = mirrors_xml.findall('Mirror')
+            mirrors_xml = parse(urllib2.urlopen(full_url))
+            mirrors = mirrors_xml.findall('Mirror')
 
-        random.seed()
-        mirror_to_get = random.randrange(0, len(mirrors), 1)
+            random.seed()
+            mirror_to_get = random.randrange(0, len(mirrors), 1)
 
-        mirror = mirrors[mirror_to_get]
-        self.active_mirror = mirror.findtext('mirrorpath')
+            mirror = mirrors[mirror_to_get]
+            self.active_mirror = mirror.findtext('mirrorpath')
 
-        if self.debug:
-            print "Using thetvdb mirror: %s" % (self.active_mirror, )
-
+            if self.debug:
+                print "Using thetvdb mirror: %s" % (self.active_mirror, )
 
 
     # returns an integer timestamp
     def get_server_time(self):
+        self.find_mirror()
+
         full_url = self.active_mirror + SERVER_TIME_URL % (API_KEY, )
 
         if self.debug:
@@ -58,6 +63,8 @@ class TheTvDb:
 
     # returns a metadata.Series object
     def lookup_series_info(self, name):
+        self.find_mirror()
+
         full_url = self.active_mirror + SERIES_LOOKUP_URL % (name.strip().replace(' ', '%20'),)
 
         if self.debug:
@@ -92,6 +99,8 @@ class TheTvDb:
 
     # returns a list of metadata.Episode objects: 
     def get_full_episode_list(self, series):
+        self.find_mirror()
+
         full_url = self.active_mirror + EPISODE_HISTORY_URL % (API_KEY, series.id)
 
         if self.debug:
@@ -110,6 +119,8 @@ class TheTvDb:
 
     # returns a metadata.Episode object
     def get_specific_episode(self, series, season_number, episode_number):
+        self.find_mirror()
+
         full_url = self.active_mirror + EPISODE_URL % (API_KEY, series.id, season_number, episode_number)
 
         if self.debug:
@@ -127,6 +138,8 @@ class TheTvDb:
 
     # returns a metadata.Episode object
     def get_specific_episode_by_date(self, series, year, month, day):
+        self.find_mirror()
+
         formatted_date='%i-%i-%i' % (year, month, day)
         full_url = self.active_mirror + EPISODE_LOOKUP_BY_DATE_URL % (API_KEY, series.id, formatted_date)
 
