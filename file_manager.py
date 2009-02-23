@@ -219,13 +219,3 @@ class FileManager():
         return os.path.join(library_base_path, title, "Season %02i" % (season,) )
 
 
-
-    def get_four_digit_year(self, raw_year):
-        if raw_year > 99:
-            return raw_year
-        elif raw_year > 40:
-            return raw_year + 1900
-        else:
-            return raw_year + 2000
-            
-        
