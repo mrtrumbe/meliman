@@ -76,3 +76,10 @@ title_words_to_ignore=a,an,at,and,the,from,with
 
 title_chars_to_ignore=,.;:/?'"-_+&[]{}|=\!@#$%^&*()`~
 
+
+# This tells the application to wait a certain number of minutes before
+#  processing a new file.  The timer starts from the creation time of 
+#  the file.
+
+wait_after_file_creation_in_minutes=10
+

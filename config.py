@@ -64,3 +64,6 @@ class MelimanConfig:
     def getTitleCharsToIgnore(self):
         return self.config.get('Miscellaneous', 'title_chars_to_ignore').strip()
 
+    def getWaitFromFileCreationInMinutes(self):
+        return self.config.get('Miscellaneous', 'wait_from_file_creation_in_minutes').strip()
+
