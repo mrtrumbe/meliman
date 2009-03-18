@@ -38,6 +38,8 @@ class FileManager():
 
         self.format = config.getLibraryFormat()
 
+        self.wait_from_file_creation_minutes = config.getWaitFromFileCreationInMinutes()
+
         # create FileMatcher objects for each watched series
         self.file_matchers = []
         watched_series = self.database.get_watched_series()
@@ -47,19 +49,31 @@ class FileManager():
 
     # returns a tuple of the form: (file_name, series, episode)
     def match_file(self, file_path):
-        for file_matcher in self.file_matchers:
-            if file_matcher.matches_series_title(file_path):
-                if self.debug:
-                    print "File '%s' matches series '%s'." % (file_path, file_matcher.series.title)
+        if self.is_time_to_process_file(file_path):
+            for file_matcher in self.file_matchers:
+                if file_matcher.matches_series_title(file_path):
+                    if self.debug:
+                        print "File '%s' matches series '%s'." % (file_path, file_matcher.series.title)
 
-                matches = file_matcher.match_episode(file_path)
-                for match in matches:
-                    episode = match.get_episode_metadata(self.database, self.thetvdb)
-                    if episode:
-                        return (match.file_name, match.series, episode)
+                    matches = file_matcher.match_episode(file_path)
+                    for match in matches:
+                        episode = match.get_episode_metadata(self.database, self.thetvdb)
+                        if episode:
+                            return (match.file_name, match.series, episode)
         
         # if no matcher matches the file (or if matched episode doesn't exist), return None
         return None
+
+
+    def is_time_to_process_file(self, file_path):
+        now = datetime.now()
+        create_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+        minutes_from_creation = (now - create_time).seconds / 60.0
+
+        if minutes_from_creation > self.wait_from_file_creation_minutes:
+            return True
+
+        return False
 
 
     def generate_metadata(self, episode):
