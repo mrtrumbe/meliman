@@ -203,6 +203,11 @@ def watch_series_guts(series_id_str, watch, config, debug):
             return 2
 
         series = database.get_series(series_id)
+        if series is None:
+            series = thetvdb.get_series_info(series_id)
+            if series is not None:
+                database.add_series(series)
+
         if not series is None:
             database.watch_series(series, watch)
             return 0

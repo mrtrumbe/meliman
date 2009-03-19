@@ -62,6 +62,34 @@ class TheTvDb:
 
 
     # returns a metadata.Series object
+    def get_series_info(self, series_id):
+        self.find_mirror()
+
+        full_url = self.active_mirror + SERIES_URL % (API_KEY, series_id)
+        if self.debug:
+            print "Getting data for url: %s" % full_url
+
+        full_series = []
+        try:
+            full_series_xml = parse(urllib2.urlopen(full_url))
+            for full_s in full_series_xml.findall('Series'):
+                full_series.append(full_s)
+
+        except urllib2.HTTPError:
+            raise Exception('Could not find series with id %i' % (series_id, ))
+
+        if len(full_series) > 0:
+            if self.debug:
+                print "    found %i series:" % len(full_series)
+        
+            s_obj = self.parse_series_xml(full_series[0])
+            return s_obj
+
+        return None
+
+
+
+    # returns a list of metadata.Series object
     def lookup_series_info(self, name):
         self.find_mirror()
 

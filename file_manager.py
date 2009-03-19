@@ -38,7 +38,7 @@ class FileManager():
 
         self.format = config.getLibraryFormat()
 
-        self.wait_from_file_creation_minutes = config.getWaitFromFileCreationInMinutes()
+        self.wait_from_file_creation_minutes = int(config.getWaitFromFileCreationInMinutes())
 
         # create FileMatcher objects for each watched series
         self.file_matchers = []
@@ -68,10 +68,12 @@ class FileManager():
     def is_time_to_process_file(self, file_path):
         now = datetime.now()
         create_time = datetime.fromtimestamp(os.path.getmtime(file_path))
-        minutes_from_creation = (now - create_time).seconds / 60.0
+        minutes_from_creation = int((now - create_time).seconds / 60.0)
 
         if minutes_from_creation > self.wait_from_file_creation_minutes:
             return True
+        elif self.debug:
+            print "Will not process file '%s' because it is too soon after file creation time. Minutes since creation: %s  Minutes before processing: %s" % (file_path, minutes_from_creation, self.wait_from_file_creation_minutes)
 
         return False
 
