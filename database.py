@@ -7,6 +7,7 @@ import metadata
 
 SERIES_COLUMNS="s.id, s.zap2it_id, s.imdb_id, s.title, s.description, s.actors, s.genres, s.content_rating, s.watch"
 EPISODE_COLUMNS="e.id, e.title, e.description, e.season_number, e.episode_number, e.original_air_date, e.rating, e.director, e.host, e.choreographer, e.guest_stars, e.writers, e.executive_producers, e.producers"
+MOVIE_COLUMNS="m.id, m.imdb_id, m.title, m.description, m.time, m.rating, m.directors, m.writers, m.producers, m.actors, m.movie_year, m.mpaa_rating, m.genres"
 
 TIME_FORMAT='%Y-%m-%d %H:%M:%S'
 ORIGINAL_AIR_DATE_FORMAT='%Y-%m-%d'
@@ -214,6 +215,46 @@ class Database():
             c.close()
 
 
+
+
+    def get_movie(self, id):
+        c = self.connection.cursor()
+        try:
+            sql = 'select %s from movies m where imdb_id=?' % (MOVIE_COLUMNS, )
+            c.execute(sql, (id, ))
+
+            results = c.fetchall()
+            if len(results) == 1:
+                r = results[0]
+                to_return = self.create_movie_from_row(r)
+                return to_return
+            else:
+                return None
+
+        finally:
+            c.close()
+
+
+
+    def add_movie(self, movie):
+        existing_movie = self.get_movie(movie.id)
+        if existing_movie is None:
+            if self.debug:
+                print "Adding movie '%s' to the local cache." % (movie.title, )
+
+            c = self.connection.cursor()
+            try:
+                c.execute(
+                        'insert into movies (imdb_id, title, description, time, rating, directors, writers, producers, actors, movie_year, mpaa_rating, genres) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                        (movie.id, movie.title, movie.description, movie.time, movie.rating, '|'.join(movie.directors), '|'.join(movie.writers), '|'.join(movie.producers), '|'.join(movie.actors), movie.movie_year, movie.mpaa_rating, '|'.join(movie.genres)))
+
+                self.connection.commit()
+            finally:
+                c.close()
+             
+
+
+
     def create_series_from_row(self, row):
         to_return = metadata.Series()
         to_return.id = row[0]
@@ -246,7 +287,7 @@ class Database():
         else:
             to_return.original_air_date = None
         to_return.rating = row[15]
-        to_return.director = row[16].split('|')
+        to_return.directors = row[16].split('|')
         to_return.host = row[17]
         to_return.choreographer = row[18]
         to_return.guest_stars = row[19].split('|')
@@ -255,6 +296,30 @@ class Database():
         to_return.producers = row[22].split('|')
 
         return to_return
+
+    def create_movie_from_row(self, row):
+        to_return = metadata.Movie()
+
+        to_return.db_id = row[0]
+        to_return.id = row[1]
+        to_return.title = row[2]
+        to_return.description = row[3]
+        if not row[4].strip() == '':
+            to_return.time = self.get_datetime_from_string(row[4], TIME_FORMAT)
+        else:
+            to_return.time = None
+        to_return.rating = row[5]
+        to_return.directors = row[6].split('|')
+        to_return.writers = row[7].split('|')
+        to_return.producers = row[8].split('|')
+        to_return.actors = row[9].split('|')
+        to_return.movie_year = row[10]
+        to_return.mpaa_rating = row[11]
+        to_return.genres = row[12].split('|')
+
+        return to_return
+
+
 
     def get_datetime_from_string(self, input_str, format):
         if input_str is None or input_str == '':

@@ -5,6 +5,7 @@ import os
 import shutil
 import sqlite3
 import traceback
+import re
 
 from optparse import OptionParser, OptionGroup
 from datetime import datetime
@@ -13,6 +14,7 @@ from config import MelimanConfig
 from thetvdb import TheTvDb
 from database import Database
 from file_manager import FileManager
+from moviedb import MovieDB
 import metadata
 
 
@@ -41,12 +43,14 @@ def parse_options():
     action_group = OptionGroup(opt_parser, "Options Triggering an Action", "Exactly one of these must be present in every run.")
     action_group.add_option("-s", "--series-lookup", action="store", dest="series_lookup", help="Lookup the TV series matching the provided string.", metavar="SERIES_NAME")
     action_group.add_option("-e", "--episode-lookup", action="store", dest="episode_lookup", help="Lookup the TV episode matching the pattern: 'series_id[:season_number[:episode_number]]'", metavar="EPISODE_PATTERN")
+    action_group.add_option("-o", "--movie-lookup", action="store", dest="movie_lookup", help="Lookup the Movie on IMDb matching the provided text.  Use full name and year to better match results.", metavar="MOVIE_SEARCH_TEXT")
     action_group.add_option("-w", "--watch-series", action="store", dest="watch_series", help="Tells the application to start watching the series with the provided id.", metavar="SERIES_ID")
     action_group.add_option("-u", "--unwatch-series", action="store", dest="unwatch_series", help="Tells the application to stop watching the series with the provided id.", metavar="SERIES_ID")
     action_group.add_option("-l", "--list-watched-series", action="store_true", dest="list_watched_series", help="Lists the series currently being watched by the application.")
     action_group.add_option("-c", "--clear-episodes", action="store", dest="clear_episodes", help="Clears the local cache of episodes for a given series.")
     action_group.add_option("-f", "--cleanup-file-name", action="store", dest="cleanup_file_name", help="Generates a cleaned up version of the file name based on meta data.", metavar="FILE")
-    action_group.add_option("-m", "--metadata", action="store", dest="metadata", help="Outputs the metadata for the file in question.", metavar="FILE")
+    action_group.add_option("-m", "--movie_metadata", action="store", dest="movie_metadata", help="Outputs metadata for the movie file provided. Does not tag the media.", metavar="MOVIE_FILE")
+    action_group.add_option("-t", "--tv_series_metadata", action="store", dest="tv_series_metadata", help="Outputs metadata for the tv series file provided. Does not tag the media.", metavar="TV_SERIES_FILE")
     action_group.add_option("-r", "--regenerate", action="store_true", dest="regenerate", help="Regenerates metadata for the library directories.  Any existing metadata will be overwritten.")
     action_group.add_option("-g", "--generate", action="store", dest="generate", help="Recursively traverses the provided directory, generating metadata and tagging each media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
     action_group.add_option("-p", "--process", action="store_true", dest="process", help="Processes files in the incoming directory and organizes the media library.")
@@ -61,7 +65,7 @@ def parse_options():
 
 
 def do_action(options, args, config, debug, move):
-    action_args = (options.series_lookup, options.episode_lookup, options.watch_series, options.unwatch_series, options.list_watched_series, options.clear_episodes, options.cleanup_file_name, options.metadata, options.generate, options.regenerate, options.process)
+    action_args = (options.series_lookup, options.episode_lookup, options.movie_lookup, options.watch_series, options.unwatch_series, options.list_watched_series, options.clear_episodes, options.cleanup_file_name, options.movie_metadata, options.tv_series_metadata, options.generate, options.regenerate, options.process)
 
     true_count=0
     for arg in action_args:
@@ -77,6 +81,9 @@ def do_action(options, args, config, debug, move):
         elif options.clear_episodes:
             return do_clear_episodes(options.clear_episodes, config, debug)
 
+        elif options.movie_lookup:
+            return do_movie_lookup(options.movie_lookup, config, debug)
+
         elif options.watch_series:
             return do_watch_series(options.watch_series, config, debug)
         elif options.unwatch_series:
@@ -86,8 +93,12 @@ def do_action(options, args, config, debug, move):
 
         elif options.cleanup_file_name:
             return do_cleanup_file_name(options.cleanup_file_name, config, debug)
-        elif options.metadata:
-            return do_metadata(options.metadata, config, debug)
+
+        elif options.movie_metadata:
+            return do_movie_metadata(options.movie_metadata, config, debug)
+        elif options.tv_series_metadata:
+            return do_tv_series_metadata(options.tv_series_metadata, config, debug)
+
 
         elif options.generate:
             return do_generate(options.generate, config, debug)
@@ -181,6 +192,24 @@ def get_specific_episode(thetvdb, database, series, season_number, episode_numbe
 def print_episodes(episodes):
     for e in episodes:
         print "%s season %i, episode %i: %s" % (e.series.title, e.season_number, e.episode_number, e.title)
+
+
+
+def do_movie_lookup(movie_search_text, config, debug):
+    try:
+        moviedb = MovieDB(config, debug)
+
+        movie_list = moviedb.lookup_movies(movie_search_text)
+        if movie_list is None:
+            print "No movies match text '%i'." % (movie_search_text,)
+            return 2
+
+        for movie in movie_list:
+            print "%s: %s (%s)" % (movie.id, movie.title, movie.movie_year)
+    except:
+        traceback.print_exc()
+        return 11
+
 
         
     
@@ -281,7 +310,62 @@ def do_cleanup_file_name(input_file_name, config, debug):
         return 11
 
 
-def do_metadata(input_file_path, config, debug):
+def do_movie_metadata(input_file_path, config, debug):
+    try:
+        moviedb = MovieDB(config, debug)
+        database = Database(config, debug)
+        thetvdb = TheTvDb(config, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
+
+        match = get_movie(input_file_path, moviedb, database)
+        if match is None:
+            print "File name '%s' doesn't match any movie in the local cache or on IMDb." % input_file_path, 
+            return 2
+        else:
+            (file_name, movie) = match
+
+        metadata = file_manager.generate_movie_metadata(movie)
+        if metadata is None:
+            print "Error generating metadata for file '%s'." % (file_name, )
+            return 4
+
+        for l in metadata:
+            print l
+
+        return 0
+    except:
+        traceback.print_exc()
+        return 11
+
+def get_movie(input_file_path, moviedb, database):
+    (input_path, input_file) = os.path.split(input_file_path)
+
+    movie = None
+
+    match = re.match('^(?P<name>.*)\_(?P<imdbid>\d+)\..*$', input_file)
+    if match:
+        possible_id = int(match.group('imdbid'))
+        name = match.group('name')
+
+        movie = database.get_movie(possible_id)
+        if movie is None:
+            movie = moviedb.lookup_movie(name)
+            if movie is not None:
+                database.add_movie(movie)
+    else:
+        movie = moviedb.lookup_movie(input_file)
+        if movie is not None:
+            database.add_movie(movie)
+
+    if movie is None:
+        return None
+    else:
+        return (input_file, movie)
+
+
+
+
+def do_tv_series_metadata(input_file_path, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
         database = Database(config, debug)
@@ -294,7 +378,7 @@ def do_metadata(input_file_path, config, debug):
         else:
             (file_name, series, episode) = match
 
-        metadata = file_manager.generate_metadata(episode)
+        metadata = file_manager.generate_episode_metadata(episode)
         if metadata is None:
             print "Error generating metadata for file '%s'." % (file_name, )
             return 4

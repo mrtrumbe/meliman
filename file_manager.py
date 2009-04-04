@@ -22,11 +22,13 @@ FILE_PATTERN_BY_EPISODE_FOLDERS='^.*%s.*/+season[-_.\ ]*(?P<season>\d+)/+(episod
 FILE_PATTERN_BY_DATE='^.*%s.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D.*$'
 
 FILE_NAME='%s-s%02i_e%03i.%s'
+MOVIE_FILE_NAME='%s_%i_%i.%s'
 
 class FileManager():
-    def __init__(self, config, database, thetvdb, debug):
+    def __init__(self, config, database, thetvdb, moviedb, debug):
         self.database = database
         self.thetvdb = thetvdb
+        self.moviedb = moviedb
         self.debug = debug
 
         self.lock_file_path = config.getLockFile()
@@ -78,12 +80,31 @@ class FileManager():
         return False
 
 
-    def generate_metadata(self, episode):
+    def generate_tv_series_metadata(self, episode):
         if self.format == 'pyTivo':
             if self.debug:
                 print 'Generating metadata for \'%s\' season %i episode %i in pyTivo format' % (episode.series.title, episode.season_number, episode.episode_number)
 
             unformatted_metadata = episode.format_for_pyTivo(datetime.now())
+
+            to_return = []
+            for l in unformatted_metadata:
+                to_append = unicodedata.normalize('NFKD', unicode(l)).encode('ascii', 'ignore')
+                to_append = to_append + os.linesep
+                to_return.append(to_append)
+
+            return to_return
+        else:
+            print "Format '%s' is not a valid format.\n" % self.format
+            return None
+
+
+    def generate_movie_metadata(self, movie):
+        if self.format == 'pyTivo':
+            if self.debug:
+                print 'Generating metadata for movie \'%s\' in pyTivo format' % (movie.title, )
+
+            unformatted_metadata = movie.format_for_pyTivo()
 
             to_return = []
             for l in unformatted_metadata:

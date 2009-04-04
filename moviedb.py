@@ -14,15 +14,40 @@ class MovieDB:
             self.db = imdb.IMDb()
 
 
+    # Returns all movies matching the search_text,
+    #  but only the summary data (id, title, year, etc.)
+    def lookup_movies(self, search_text):
+        self.connect()
+
+        mlist = self.db.search_movie(search_text)
+        to_return = []
+        for m in mlist:
+            #self.db.update(m)
+            to_return.append(self.construct_movie_metadata(m))
+
+        return to_return
+
+
+    # Returns the movie best matching the search text
+    #   Using the exact name and including the year
+    #   helps search results
     def lookup_movie(self, search_text):
         self.connect()
 
-        mlist = self.db.search_movie(seearch_text)
+        mlist = self.db.search_movie(search_text)
 
         # Assume its the first movie...if it isn't
         # the user needs to provide a better search string
-        movie = mlist[0]
+        if len(mlist) == 0:
+            return None
 
+        movie = mlist[0]
+        self.db.update(movie)
+
+        return self.construct_movie_metadata(movie)
+
+
+    def construct_movie_metadata(self, movie):
         to_return = Movie()
         to_return.id = self.get_id(movie)
         to_return.title = self.get_title(movie)
@@ -39,52 +64,77 @@ class MovieDB:
         return to_return
 
 
+
     # Private methods for extraction of information
 
     def get_id(self, movie):
         return int(self.db.get_imdbID(movie))
 
     def get_title(self, movie):
-        return movie['title']
+        return movie['title'].encode("utf-8")
 
     def get_plot(self, movie):
-        plot = movie['plot'][0]
-        author_location = plot.rfind('::')
+        try:
+            plot = movie['plot'][0]
+            author_location = plot.rfind('::')
 
-        to_return = plot
-        if author_location > 0:
-            to_return = plot[0:author_location]
+            to_return = plot
+            if author_location > 0:
+                to_return = plot[0:author_location]
 
-        return to_return
+            return to_return.encode("utf-8")
+        except:
+            return ''
 
     def get_movie_year(self, movie):
-        return movie['year']
+        return int(movie['year'])
 
     def get_writers(self, movie):
-        return [ w['name'] for w in movie['writer'] ]
+        try:
+            return [ w['name'].encode("utf-8") for w in movie['writer'] ]
+        except:
+            return []
 
     def get_actors(self, movie):
-        return [ a['name'] for a in movie['actors'] ]
+        try:
+            return [ a['name'].encode("utf-8") for a in movie['actors'] ]
+        except:
+            return []
 
     def get_directors(self, movie):
-        return [ d['name'] for d in movie['director'] ]
+        try:
+            return [ d['name'].encode("utf-8") for d in movie['director'] ]
+        except:
+            return []
 
     def get_producers(self, movie):
-        return [ p['name'] for p in movie['producer'] ]
+        try:
+            return [ p['name'].encode("utf-8") for p in movie['producer'] ]
+        except:
+            return []
 
     def get_genres(self, movie):
-        return movie['genre']
+        try:
+            return [ g.encode("utf-8") for g in movie['genre'] ]
+        except:
+            return []
 
     def get_rating(self, movie):
-        return movie['rating']
+        try:
+            return float(movie['rating'])
+        except:
+            return ''
 
     def get_mpaa_rating(self, movie):
-        for c in movie['certificates']:
-            split_c = c.split(':')
-            if split_c[0] == 'USA':
-                return split_c[1]
+        try:
+            for c in movie['certificates']:
+                split_c = c.split(':')
+                if split_c[0] == 'USA':
+                    return split_c[1].encode("utf-8")
 
-        return ''
+            return ''
+        except:
+            return ''
 
 
 

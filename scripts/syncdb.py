@@ -203,9 +203,6 @@ def insert_database_version(version, comment, database):
 
 
 
-
-
-
 if __name__ == "__main__":
     exit(main())
 

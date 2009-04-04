@@ -144,6 +144,77 @@ class Movie(MetaData):
         MetaData.__init__(self)
 
         self.actors = []
+        self.genres = []
         self.movie_year = 1900
         self.mpaa_rating = ""
+
+    def format_for_pyTivo(self):
+        to_return = []
+
+        # Episode info
+
+        to_return.append('isEpisode : false')
+        to_return.append('title : %s' % self.title, )
+        to_return.append('time : %s' % self.time.strftime('%Y-%m-%dT%H:%M:%SZ'), )
+        to_return.append('movieYear : %s' % self.movie_year, )
+
+        desc_out = 'description: %s' % (self.description.replace('\n', ' '), )
+        to_return.append(desc_out)
+
+        for d in self.directors:
+            if not (d is None or d.strip() == ''):
+                to_return.append('vDirector : %s' % d, )
+
+        for p in self.producers:
+            if not (p is None or p.strip() == ''):
+                to_return.append('vProducer : %s' % p, )
+
+        for w in self.writers:
+            if not (w is None or w.strip() == ''):
+                to_return.append('vWriter : %s' % w, )
+
+        for a in self.actors:
+            if not (a is None or a.strip() == ''):
+                to_return.append('vActor : %s' % a, )
+
+        for p in self.producers:
+            if not (p is None or p.strip() == ''):
+                to_return.append('vProducer : %s' % p, )
+
+        for g in self.genres:
+            if not (g is None or g.strip() == ''):
+                to_return.append('vProgramGenre : %s' % g, )
+
+        ten_star_rating = self.rating
+        eight_star_rating = 8 * ten_star_rating / 10.0
+        four_star_rating = round(eight_star_rating) / 2.0
+        tivo_star_rating = int(four_star_rating * 2) - 1
+        if tivo_star_rating >= 1:
+            to_return.append('starRating : x%i' % tivo_star_rating)
+
+        if not (self.mpaa_rating is None or self.mpaa_rating == ''):
+            mpaa_rating = self.mpaa_rating.strip()
+            mpaa_to_use = 'N8'
+
+            if mpaa_rating == 'G':
+                mpaa_to_use = 'G1'
+            elif mpaa_rating == 'PG':
+                mpaa_to_use = 'P2'
+            elif mpaa_rating == 'PG-13':
+                mpaa_to_use = 'P3'
+            elif mpaa_rating == 'R':
+                mpaa_to_use = 'R4'
+            elif mpaa_rating == 'X':
+                mpaa_to_use = 'X5'
+            elif mpaa_rating == 'NC-17':
+                mpaa_to_use = 'N6'
+            elif mpaa_rating == 'NR':
+                mpaa_to_use = 'N8'
+
+            to_return.append('mpaaRating : %s' % mpaa_to_use, )
+
+        return to_return
+
+        
+
 
