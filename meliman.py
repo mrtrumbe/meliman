@@ -624,7 +624,8 @@ def get_movie(input_file_path, moviedb, database):
                 database.add_movie(movie)
 
     if movie is None:
-        movie = moviedb.lookup_movie(utility.strip_extension(input_file))
+        search_text = utility.strip_extension(input_file)
+        movie = moviedb.lookup_movie(search_text)
         if movie is not None:
             database.add_movie(movie)
 

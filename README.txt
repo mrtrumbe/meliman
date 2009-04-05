@@ -5,11 +5,10 @@ Currently unversioned.
 
 == FEATURES ==
 
-Meliman currently supports only tv series.  Support for movies is planned.
-
-Meliman is based on a "watched series" strategy: rather than guessing which series 
-a file belongs to, a user first sets up a list of series which the program will then 
-watch for.  Typically, operation of Meliman will look something like this:
+Managing TV series with Meliman is based on a "watched series" strategy: rather than 
+guessing which series a file belongs to, a user first sets up a list of series which 
+the program will then watch for.  Typically, operation of Meliman for TV series will 
+look something like this:
 
     # ./meliman.py -s "The Simpsons"
     71663: The Simpsons
@@ -24,7 +23,7 @@ watch for.  Typically, operation of Meliman will look something like this:
     time : 2008-12-17T10:19:47Z
     description: #7.  The Simpsons' house begins sinking ...
     
-    # ./meliman.py -l
+    # ./meliman.py -a
     71663: The Simpsons
 
 Here, we first look up series matching the string "The Simpsons", then we tell 
@@ -32,7 +31,37 @@ Meliman to watch the series based on its id, then we feed a file to Meliman and
 have it generate metadata, and finally we list the series we are currently watching.  
 Note that the -m option just prints the metadata, it doesn't tag the file.
 
-Once you have started watching some series with Meliman, you can use Meliman to
+Meliman also supports movies.  Here, because of practicality, we abandon the watch
+strategy and do a lookup against IMDb.  Most operations against series are also 
+available for movies by just capitalizing the option. Here is what operations for 
+movies look like:
+
+    # ./meliman.py -S "The Simpsons"
+    96697: The Simpsons (1989)
+    462538: The Simpsons Movie (2007)
+    296852: The Simpsons (1991)
+    1139628: The Simpsons Game (2007)
+    ...
+
+    # ./meliman.py -M "The Simpsons Movie (2007).avi"
+    isEpisode : false
+    title : The Simpsons Movie
+    movieYear : 2007
+    ...
+
+    # ./meliman.py -F "The Simpsons Movie (2007).avi"
+    The Simpsons Movie (2007) [462538].avi
+
+Here, we first search for a movie using some text.  Notice that we get a lot of 
+search hits here.  Because we aren't using a watching strategy, we need to be 
+very specific with our search text and media file naming.  The best strategy (and
+the one we use in the example) is to use the full name of the movie followed by
+the year the movie was released in parenthesis.  That way, you can be sure that
+meliman matches the exact movie you want.  The second command in this example
+generates metadata for the media file and the third generates a library friendly
+version of the media file's name.
+
+Once you have started watching some TV series with Meliman, you can use Meliman to
 watch an incoming directory and copy/move media files to a library directory, tagging
 the file with metadata in the process.  To make this work, you'll want to properly 
 setup entries in your configuration file.  These three settings, in particular, are 
@@ -67,6 +96,9 @@ file and using meliman's help option:
 
     # ./meliman.py --help
 
+Meliman doesn't currently manage movies for your library.  This functionality should
+be available soon.
+
 
 Feature list:
     - Lookup series from thetvdb.com based on a search string
@@ -80,7 +112,6 @@ Feature list:
 
 Planned improvements:
     - Arbitrary media file tagging (not using -p or the generate options)
-    - Faster performance (better thetvdb usage, better pattern matching, etc.)
     - Support more metadata formats (like mp4 file tagging for AppleTV)
     - Ability to run meliman as a server
     - A web-based GUI
@@ -90,12 +121,19 @@ Planned improvements:
 
 Requirements: 
     - Python 2.5 (http://www.python.org)
+    - imdbpy (http://imdbpy.sourceforge.net/)
+        The easiest way to get imdbpy is probably through setup tools/easy_install.  
+        Get setup tools here: http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
+        Once you've installed easy_install, install imdbpy using:
+            easy_install imdbpy
+        You may need to run this with sudo or otherwise escalate your priviledges.
 
 Installation of Meliman is pretty simple:
     - Put the Meliman folder wherever you like on your computer (referred to from
         here on as INSTALL_PATH).
     - Create a db file for local caching:
-        cp INSTALL_PATH/metadata.db.dist DESIRED_DB_FILE_LOCATION
+        cd INSTALL_PATH
+        python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
     - Create a config file for the application:
         cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
     - Edit the config file to point to your db file and the various directories you want to 
@@ -106,4 +144,5 @@ Once you have installed the application, you can immediately use the meliman.py
 script to operate the program.  Execute the follwing for more information:
 
     INSTALL_PATH/meliman.py --help
+
 
