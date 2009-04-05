@@ -47,6 +47,18 @@ class MovieDB:
         return self.construct_movie_metadata(movie)
 
 
+    def get_movie(self, id):
+        self.connect()
+
+        try:
+            movie = self.db.get_movie(id)
+            self.db.update(movie)
+        except:
+            return None
+
+        return self.construct_movie_metadata(movie)
+
+ 
     def construct_movie_metadata(self, movie):
         to_return = Movie()
         to_return.id = self.get_id(movie)
@@ -71,7 +83,7 @@ class MovieDB:
         return int(self.db.get_imdbID(movie))
 
     def get_title(self, movie):
-        return movie['title'].encode("utf-8")
+        return movie['title']
 
     def get_plot(self, movie):
         try:
@@ -82,7 +94,7 @@ class MovieDB:
             if author_location > 0:
                 to_return = plot[0:author_location]
 
-            return to_return.encode("utf-8")
+            return to_return
         except:
             return ''
 
@@ -91,31 +103,31 @@ class MovieDB:
 
     def get_writers(self, movie):
         try:
-            return [ w['name'].encode("utf-8") for w in movie['writer'] ]
+            return [ w['name'] for w in movie['writer'] ]
         except:
             return []
 
     def get_actors(self, movie):
         try:
-            return [ a['name'].encode("utf-8") for a in movie['actors'] ]
+            return [ a['name'] for a in movie['actors'] ]
         except:
             return []
 
     def get_directors(self, movie):
         try:
-            return [ d['name'].encode("utf-8") for d in movie['director'] ]
+            return [ d['name'] for d in movie['director'] ]
         except:
             return []
 
     def get_producers(self, movie):
         try:
-            return [ p['name'].encode("utf-8") for p in movie['producer'] ]
+            return [ p['name'] for p in movie['producer'] ]
         except:
             return []
 
     def get_genres(self, movie):
         try:
-            return [ g.encode("utf-8") for g in movie['genre'] ]
+            return [ g for g in movie['genre'] ]
         except:
             return []
 
@@ -123,14 +135,14 @@ class MovieDB:
         try:
             return float(movie['rating'])
         except:
-            return ''
+            return 0.0
 
     def get_mpaa_rating(self, movie):
         try:
             for c in movie['certificates']:
                 split_c = c.split(':')
                 if split_c[0] == 'USA':
-                    return split_c[1].encode("utf-8")
+                    return split_c[1]
 
             return ''
         except:

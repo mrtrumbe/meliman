@@ -18,6 +18,7 @@ class Database():
 
         database_file = config.getDatabaseFile()
         self.connection = sqlite3.connect(database_file)
+        #self.connection.text_factory = sqlite3.OptimizedUnicode
 
 
     def get_series(self, id):
@@ -33,6 +34,22 @@ class Database():
                 return to_return
             else:
                 return None
+
+        finally:
+            c.close()
+
+    def get_all_series(self):
+        c = self.connection.cursor()
+        try:
+            sql = 'select %s from series s' % (SERIES_COLUMNS, )
+            c.execute(sql)
+
+            to_return = []
+            results = c.fetchall()
+            for r in results:
+                to_return.append(self.create_series_from_row(r))
+
+            return to_return
 
         finally:
             c.close()
@@ -98,6 +115,19 @@ class Database():
 
         finally:
             c.close()
+
+
+    def clear_series(self, series_id):
+        c = self.connection.cursor()
+        try:
+            sql = 'delete from series where id=?'
+            c.execute(sql, (series_id, ))
+
+            self.connection.commit()
+        finally:
+            c.close()
+
+
 
 
 
@@ -235,6 +265,22 @@ class Database():
             c.close()
 
 
+    def get_all_movies(self):
+        c = self.connection.cursor()
+        try:
+            sql = 'select %s from movies m' % (MOVIE_COLUMNS, )
+            c.execute(sql)
+
+            to_return = []
+            results = c.fetchall()
+            for r in results:
+                to_return.append(self.create_movie_from_row(r))
+
+            return to_return
+
+        finally:
+            c.close()
+
 
     def add_movie(self, movie):
         existing_movie = self.get_movie(movie.id)
@@ -252,6 +298,23 @@ class Database():
             finally:
                 c.close()
              
+
+    def clear_movie(self, movie_id):
+        c = self.connection.cursor()
+        try:
+            sql = 'delete from movies where imdb_id=?'
+            c.execute(sql, (movie_id, ))
+
+            self.connection.commit()
+        finally:
+            c.close()
+
+
+
+
+
+
+
 
 
 

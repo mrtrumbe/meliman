@@ -1,13 +1,13 @@
 import os
 import re
 import shutil
-import unicodedata
 
 from datetime import datetime
 
 import config
 import database
 import thetvdb
+import utility
 from file_matcher import FileMatcher
 
 RECENT_ADDITIONS = "_Recent Additions"
@@ -21,14 +21,13 @@ FILE_PATTERN_BY_EPISODE='^.*%s.*s(?P<season>\d+)[-_x\.\ ]?e(?P<episode>\d+).*$'
 FILE_PATTERN_BY_EPISODE_FOLDERS='^.*%s.*/+season[-_.\ ]*(?P<season>\d+)/+(episode[-_.\ ]*)*(?P<episode>\d+).*$'
 FILE_PATTERN_BY_DATE='^.*%s.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D.*$'
 
-FILE_NAME='%s-s%02i_e%03i.%s'
-MOVIE_FILE_NAME='%s_%i_%i.%s'
+SERIES_FILE_NAME='%s-s%02i_e%03i.%s'
+MOVIE_FILE_NAME='%s (%i) [%i].%s'
 
 class FileManager():
-    def __init__(self, config, database, thetvdb, moviedb, debug):
+    def __init__(self, config, database, thetvdb, debug):
         self.database = database
         self.thetvdb = thetvdb
-        self.moviedb = moviedb
         self.debug = debug
 
         self.lock_file_path = config.getLockFile()
@@ -50,8 +49,8 @@ class FileManager():
 
 
     # returns a tuple of the form: (file_name, series, episode)
-    def match_file(self, file_path):
-        if self.is_time_to_process_file(file_path):
+    def match_file(self, file_path, skip_timecheck):
+        if skip_timecheck or self.is_time_to_process_file(file_path):
             for file_matcher in self.file_matchers:
                 if file_matcher.matches_series_title(file_path):
                     if self.debug:
@@ -80,7 +79,7 @@ class FileManager():
         return False
 
 
-    def generate_tv_series_metadata(self, episode):
+    def generate_episode_metadata(self, episode):
         if self.format == 'pyTivo':
             if self.debug:
                 print 'Generating metadata for \'%s\' season %i episode %i in pyTivo format' % (episode.series.title, episode.season_number, episode.episode_number)
@@ -89,7 +88,7 @@ class FileManager():
 
             to_return = []
             for l in unformatted_metadata:
-                to_append = unicodedata.normalize('NFKD', unicode(l)).encode('ascii', 'ignore')
+                to_append = utility.unicode_to_ascii(l)
                 to_append = to_append + os.linesep
                 to_return.append(to_append)
 
@@ -108,7 +107,7 @@ class FileManager():
 
             to_return = []
             for l in unformatted_metadata:
-                to_append = unicodedata.normalize('NFKD', unicode(l)).encode('ascii', 'ignore')
+                to_append = utility.unicode_to_ascii(l)
                 to_append = to_append + os.linesep
                 to_return.append(to_append)
 
@@ -116,8 +115,6 @@ class FileManager():
         else:
             print "Format '%s' is not a valid format.\n" % self.format
             return None
-
-
 
 
     def copy_media_to_library(self, input_file_path, library_path, library_file_name, move):
@@ -150,28 +147,24 @@ class FileManager():
             os.remove(meta_file_path)
 
 
-    def write_metadata(self, library_path, library_file_name, episode):
+    def write_metadata(self, library_path, library_file_name, metadata):
         media_file_path = os.path.join(library_path, library_file_name)
         if self.format == 'pyTivo':
             meta_file_path = media_file_path + PY_TIVO_METADATA_EXT
         else:
             return False
 
-        metadata = self.generate_metadata(episode)
-        if metadata is None:
-            return False
-        else:
+        try:
+            meta_file = open(meta_file_path, "w")
             try:
-                meta_file = open(meta_file_path, "w")
-                try:
-                    meta_file.writelines(metadata)
-                    meta_file.flush()
-                finally:
-                    meta_file.close()
-            except:
-                return False
+                meta_file.writelines(metadata)
+                meta_file.flush()
+            finally:
+                meta_file.close()
+        except:
+            return False
 
-            return True
+        return True
 
 
     def add_to_recent(self, library_path, library_file_name, episode):
@@ -226,13 +219,11 @@ class FileManager():
             lock_file.close()
             return self.lock_file_path
 
+
     def relinquish_process_lock(self):
         if os.path.exists(self.lock_file_path):
             os.remove(self.lock_file_path)
             
-            
-
-
 
     def is_media_file(self, file_name):
         for e in self.file_extensions:
@@ -243,12 +234,16 @@ class FileManager():
         return False
 
 
-
-
-    def get_library_file_name(self, file_name, episode):
-        extension = file_name.split('.')[-1]
+    def get_series_library_file_name(self, file_name, episode):
+        (file, extension) = utility.split_file_name(file_name)
         split_title = [w.strip().lower() for w in episode.series.title.split(' ')]
-        return FILE_NAME % ('_'.join(split_title), episode.season_number, episode.episode_number, extension)
+        return SERIES_FILE_NAME % ('_'.join(split_title), episode.season_number, episode.episode_number, extension)
+
+
+    def get_movie_library_file_name(self, file_name, movie):
+        (file, extension) = utility.split_file_name(file_name)
+        return MOVIE_FILE_NAME % (movie.title, movie.movie_year, movie.id, extension)
+
 
     def get_library_path(self, library_base_path, episode):
         title = episode.series.title

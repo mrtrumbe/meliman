@@ -257,9 +257,10 @@ class TheTvDb:
     def get_string_list(self, xml_element, sub_element_name, separator, default):
         try:
             text = xml_element.findtext(sub_element_name)
-            return text.split(separator)
+            return [ t for t in text.split(separator) ]
+
         except:
-            return default
+            return [ t for t in default ]
 
     def get_int(self, xml_element, sub_element_name, default):
         try:
