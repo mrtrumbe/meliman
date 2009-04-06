@@ -39,8 +39,14 @@ class MelimanConfig:
     def getLibraryInputPath(self):
         return self.config.get('Library', 'input_path')
 
+    def getLibraryMovieInputPath(self):
+        return self.config.get('Library', 'movie_input_path')
+
     def getLibraryTvPath(self):
         return self.config.get('Library', 'tv_path')
+
+    def getLibraryMoviePath(self):
+        return self.config.get('Library', 'movie_path')
 
     def getLibraryFormat(self):
         return self.config.get('Library', 'format')

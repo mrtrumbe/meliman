@@ -17,9 +17,14 @@ format=pyTivo
 
 # The application will watch this directory for new files
 #   and will process any media files matching watched series
-#   and movies
 
 input_path=/src/meliman/tmp/input
+
+
+# The application will watch this directory for new files
+#   and will process any media files matching watched series
+
+movie_input_path=/src/meliman/tmp/movie_input
 
 
 # This is the library folder for TV shows imported by
@@ -27,6 +32,13 @@ input_path=/src/meliman/tmp/input
 #   this folder, so don't try to change its contents.
 
 tv_path=/src/meliman/tmp/tv
+
+
+# This is the library folder for TV shows imported by
+#   the application.  The application will 'own'
+#   this folder, so don't try to change its contents.
+
+movie_path=/src/meliman/tmp/movies
 
 
 # This is the library folder for recent media files 

@@ -167,7 +167,7 @@ class FileManager():
         return True
 
 
-    def add_to_recent(self, library_path, library_file_name, episode):
+    def add_to_recent(self, library_path, library_file_name):
         recent_file_name = datetime.now().strftime('%Y-%m-%d_%H-%M-%S_') + library_file_name
 
         media_file_path = os.path.join(library_path, library_file_name)
@@ -249,5 +249,7 @@ class FileManager():
         title = episode.series.title
         season = episode.season_number
         return os.path.join(library_base_path, title, "Season %02i" % (season,) )
+
+
 
 

@@ -559,6 +559,7 @@ def do_regenerate(config, debug):
 
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
+    moviedb = MovieDB(config, debug)
     database = Database(config, debug)
     file_manager = FileManager(config, database, thetvdb, debug)
 
@@ -572,25 +573,11 @@ def do_process(config, debug, move):
             input_path = config.getLibraryInputPath()
             tv_path = config.getLibraryTvPath()
 
-            if not os.path.exists(input_path):
-                print "Input path '%s' does not exist. Exiting." % input_path,
-                return 1
+            movie_input_path = config.getLibraryMovieInputPath()
+            movie_path = config.getLibraryMoviePath()
 
-            if not os.path.exists(tv_path):
-                print "Library TV path '%s' does not exist. Exiting." % tv_path,
-                return 2
-
-            files = []
-            for root, dir, files_to_add in os.walk(input_path):
-                for file in files_to_add:
-                    if file_manager.is_media_file(file):
-                        files.append((root, file))
-
-            input_contents = os.listdir(input_path)
-            for (root, file) in files:
-                file_path = os.path.join(root, file)
-                if os.path.isfile(file_path):
-                    process_file(file_manager, file_path, tv_path, debug, move)
+            process_tv(input_path, tv_path, file_manager, debug, move)
+            process_movies(movie_input_path, movie_path, file_manager, moviedb, database, debug, move)
 
             file_manager.cleanup_recent_folder()
         except:
@@ -643,7 +630,30 @@ def get_movie_by_id(id, moviedb, database):
     return movie
 
 
-def process_file(file_manager, input_file_path, tv_path, debug, move):
+def process_tv(input_path, tv_path, file_manager, debug, move):
+    if not os.path.exists(input_path):
+        print "Input path '%s' does not exist. Exiting." % input_path,
+        return 1
+
+    if not os.path.exists(tv_path):
+        print "Library TV path '%s' does not exist. Exiting." % tv_path,
+        return 2
+
+    files = []
+    for root, dir, files_to_add in os.walk(input_path):
+        for file in files_to_add:
+            if file_manager.is_media_file(file):
+                files.append((root, file))
+
+    input_contents = os.listdir(input_path)
+    for (root, file) in files:
+        file_path = os.path.join(root, file)
+        if os.path.isfile(file_path):
+            process_episode(file_manager, file_path, tv_path, debug, move)
+
+
+
+def process_episode(file_manager, input_file_path, tv_path, debug, move):
     try:
         match = file_manager.match_file(input_file_path, False)
         if match is None:
@@ -670,12 +680,65 @@ def process_file(file_manager, input_file_path, tv_path, debug, move):
             print "Error writing metadata to library.\n"
             return 
         
-        if not file_manager.add_to_recent(library_path, library_file_name, episode):
+        if not file_manager.add_to_recent(library_path, library_file_name):
             print "Error adding media to recent additions.\n"
             return 
     except:
         traceback.print_exc()
         print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
+
+
+def process_movies(input_path, movie_path, file_manager, moviedb, database, debug, move):
+    if os.path.exists(input_path) and os.path.exists(movie_path):
+        files = []
+        for root, dir, files_to_add in os.walk(input_path):
+            for file in files_to_add:
+                if file_manager.is_media_file(file):
+                    files.append((root, file))
+
+        input_contents = os.listdir(input_path)
+        for (root, file) in files:
+            file_path = os.path.join(root, file)
+            if os.path.isfile(file_path):
+                process_movie(file_manager, moviedb, database, file_path, movie_path, debug, move)
+
+
+def process_movie(file_manager, moviedb, database, input_file_path, movie_path, debug, move):
+    try:
+        match = get_movie(input_file_path, moviedb, database)
+        if match is None:
+            if debug:
+                print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
+
+            return
+        else:
+            (file_name, movie) = match
+
+        library_path = movie_path
+        library_file_name = file_manager.get_movie_library_file_name(file_name, movie)
+
+        if os.path.exists(os.path.join(library_path, library_file_name)):
+            print "Skipping file '%s'.  A file for that episode already exists in the library.\n" % input_file_path, 
+            return
+
+        if not file_manager.copy_media_to_library(input_file_path, library_path, library_file_name, move):
+            print "Error copying media to library.\n"
+            return 
+
+        metadata = file_manager.generate_movie_metadata(movie)
+        if not file_manager.write_metadata(library_path, library_file_name, metadata):
+            print "Error writing metadata to library.\n"
+            return 
+        
+        if not file_manager.add_to_recent(library_path, library_file_name):
+            print "Error adding media to recent additions.\n"
+            return 
+    except:
+        traceback.print_exc()
+        print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
+
+
+
 
 
 def generate_for_file(file_manager, root, file):
