@@ -1,9 +1,11 @@
 #!/bin/bash
 
-mkdir -p tmp/tv
-mkdir -p tmp/movies
-mkdir -p tmp/input
-mkdir -p tmp/movie_input
-mkdir -p tmp/recent
+scriptPath="${0%/*}"
 
-cp meliman.conf.dist meliman.conf
+mkdir -p "$scriptPath/../tmp/tv"
+mkdir -p "$scriptPath/../tmp/movies"
+mkdir -p "$scriptPath/../tmp/input"
+mkdir -p "$scriptPath/../tmp/movie_input"
+mkdir -p "$scriptPath/../tmp/recent"
+
+cp "$scriptPath/../meliman.conf.dist" "$scriptPath/../meliman.conf"

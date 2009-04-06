@@ -99,7 +99,7 @@ def do_to_migration(migration_number, schema_directory, database, print_only):
             migration_text = ''
             try:
                 migration_text = read_migration_text(path, file)
-            except Exception as ex:
+            except Exception, ex:
                 raise Exception("Unexpected error reading text of migration %s: %s" % (number, str(ex)))
             
             if print_only:
@@ -110,7 +110,7 @@ def do_to_migration(migration_number, schema_directory, database, print_only):
                 try:
                     database.executescript(migration_text)
                     database.commit()
-                except Exception as ex:
+                except Exception, ex:
                     database.rollback()
                     if migration_text != '':
                         print migration_text
@@ -189,7 +189,7 @@ def get_database_version(database):
             return r[0]
         else:
             return 0
-    except Exception as ex:
+    except Exception, ex:
         # this _likely_ means there is no version table
         return 0
 
@@ -197,7 +197,7 @@ def insert_database_version(version, comment, database):
     try:
         database.execute(VERSION_INSERT_SQL, (version, comment, str(datetime.now())))
         database.commit()
-    except Exception as ex:
+    except Exception, ex:
         database.rollback()
         raise Exception("Unexpected exception writing version to the database: %s" % (str(ex), ))
 

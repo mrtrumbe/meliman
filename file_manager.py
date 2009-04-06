@@ -25,9 +25,10 @@ SERIES_FILE_NAME='%s-s%02i_e%03i.%s'
 MOVIE_FILE_NAME='%s (%i) [%i].%s'
 
 class FileManager():
-    def __init__(self, config, database, thetvdb, debug):
+    def __init__(self, config, database, thetvdb, moviedb, debug):
         self.database = database
         self.thetvdb = thetvdb
+        self.moviedb = moviedb
         self.debug = debug
 
         self.lock_file_path = config.getLockFile()
@@ -64,6 +65,35 @@ class FileManager():
         
         # if no matcher matches the file (or if matched episode doesn't exist), return None
         return None
+
+
+    def match_movie_file(self, file_path, skip_timecheck):
+        if skip_timecheck or self.is_time_to_process_file(file_path):
+            (input_path, input_file) = os.path.split(file_path)
+
+            movie = None
+
+            match = re.match('^(?P<name>.*)\[(?P<imdbid>\d+)\]\..*$', input_file)
+            if match:
+                possible_id = int(match.group('imdbid'))
+                name = match.group('name')
+
+                movie = self.database.get_movie(possible_id)
+                if movie is None:
+                    movie = self.moviedb.lookup_movie(name)
+                    if movie is not None:
+                        self.database.add_movie(movie)
+
+            if movie is None:
+                search_text = utility.strip_extension(input_file)
+                movie = self.moviedb.lookup_movie(search_text)
+                if movie is not None:
+                    self.database.add_movie(movie)
+
+            if movie is None:
+                return None
+            else:
+                return (input_file, movie)        
 
 
     def is_time_to_process_file(self, file_path):

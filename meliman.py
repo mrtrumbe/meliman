@@ -432,8 +432,9 @@ def do_refresh_movie(movie_id_str, config, debug):
 def do_series_name(input_file_name, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
+        moviedb = MovieDB(config, debug)
         database = Database(config, debug)
-        file_manager = FileManager(config, database, thetvdb, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
         match = file_manager.match_file(input_file_name, True)
         if match is None:
@@ -455,9 +456,9 @@ def do_movie_name(input_file_name, config, debug):
         moviedb = MovieDB(config, debug)
         thetvdb = TheTvDb(config, debug)
         database = Database(config, debug)
-        file_manager = FileManager(config, database, thetvdb, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
-        match = get_movie(input_file_name, moviedb, database)
+        match = file_manager.match_movie_file(input_file_name, True)
         if match is None:
             print "File name '%s' doesn't match any movies." % input_file_name, 
             return 2
@@ -475,8 +476,9 @@ def do_movie_name(input_file_name, config, debug):
 def do_series_metadata(input_file_path, config, debug):
     try:
         thetvdb = TheTvDb(config, debug)
+        moviedb = MovieDB(config, debug)
         database = Database(config, debug)
-        file_manager = FileManager(config, database, thetvdb, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
         match = file_manager.match_file(input_file_path, True)
         if match is None:
@@ -504,9 +506,9 @@ def do_movie_metadata(input_file_path, config, debug):
         moviedb = MovieDB(config, debug)
         database = Database(config, debug)
         thetvdb = TheTvDb(config, debug)
-        file_manager = FileManager(config, database, thetvdb, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
-        match = get_movie(input_file_path, moviedb, database)
+        match = file_manager.match_movie_file(input_file_path, True)
         if match is None:
             print "File name '%s' doesn't match any movie in the local cache or on IMDb." % input_file_path, 
             return 2
@@ -536,7 +538,7 @@ def do_generate(input_directory, config, debug):
         thetvdb = TheTvDb(config, debug)
         moviedb = MovieDB(config, debug)
         database = Database(config, debug)
-        file_manager = FileManager(config, database, thetvdb, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
         files = []
         for root, dir, files_to_add in os.walk(input_directory):
@@ -562,7 +564,7 @@ def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
     moviedb = MovieDB(config, debug)
     database = Database(config, debug)
-    file_manager = FileManager(config, database, thetvdb, debug)
+    file_manager = FileManager(config, database, thetvdb, moviedb, debug)
 
     lock = file_manager.get_process_lock()
 
@@ -578,7 +580,7 @@ def do_process(config, debug, move):
             movie_path = config.getLibraryMoviePath()
 
             process_tv(input_path, tv_path, file_manager, debug, move)
-            process_movies(movie_input_path, movie_path, file_manager, moviedb, database, debug, move)
+            process_movies(movie_input_path, movie_path, file_manager, debug, move)
 
             file_manager.cleanup_recent_folder()
         except:
@@ -594,34 +596,6 @@ def do_process(config, debug, move):
 # **********************************************************
 #  Helper Methods
 # **********************************************************
-
-def get_movie(input_file_path, moviedb, database):
-    (input_path, input_file) = os.path.split(input_file_path)
-
-    movie = None
-
-    match = re.match('^(?P<name>.*)\[(?P<imdbid>\d+)\]\..*$', input_file)
-    if match:
-        possible_id = int(match.group('imdbid'))
-        name = match.group('name')
-
-        movie = database.get_movie(possible_id)
-        if movie is None:
-            movie = moviedb.lookup_movie(name)
-            if movie is not None:
-                database.add_movie(movie)
-
-    if movie is None:
-        search_text = utility.strip_extension(input_file)
-        movie = moviedb.lookup_movie(search_text)
-        if movie is not None:
-            database.add_movie(movie)
-
-    if movie is None:
-        return None
-    else:
-        return (input_file, movie)
-
 
 def get_movie_by_id(id, moviedb, database):
     movie = moviedb.get_movie(id)
@@ -689,7 +663,7 @@ def process_episode(file_manager, input_file_path, tv_path, debug, move):
         print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
 
 
-def process_movies(input_path, movie_path, file_manager, moviedb, database, debug, move):
+def process_movies(input_path, movie_path, file_manager, debug, move):
     if os.path.exists(input_path) and os.path.exists(movie_path):
         files = []
         for root, dir, files_to_add in os.walk(input_path):
@@ -701,12 +675,12 @@ def process_movies(input_path, movie_path, file_manager, moviedb, database, debu
         for (root, file) in files:
             file_path = os.path.join(root, file)
             if os.path.isfile(file_path):
-                process_movie(file_manager, moviedb, database, file_path, movie_path, debug, move)
+                process_movie(file_manager, file_path, movie_path, debug, move)
 
 
-def process_movie(file_manager, moviedb, database, input_file_path, movie_path, debug, move):
+def process_movie(file_manager, input_file_path, movie_path, debug, move):
     try:
-        match = get_movie(input_file_path, moviedb, database)
+        match = file_manager.match_movie_file(input_file_path, False)
         if match is None:
             if debug:
                 print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
