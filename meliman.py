@@ -534,6 +534,7 @@ def do_generate(input_directory, config, debug):
 
     try:
         thetvdb = TheTvDb(config, debug)
+        moviedb = MovieDB(config, debug)
         database = Database(config, debug)
         file_manager = FileManager(config, database, thetvdb, debug)
 
