@@ -463,9 +463,9 @@ def do_movie_name(input_file_name, config, debug):
             print "File name '%s' doesn't match any movies." % input_file_name, 
             return 2
         else:
-            (file_name, movie) = match
+            (file_name, movie, disc) = match
 
-        print file_manager.get_movie_library_file_name(file_name, movie)
+        print file_manager.get_movie_library_file_name(file_name, movie, disc)
         return 0
 
     except:
@@ -513,7 +513,7 @@ def do_movie_metadata(input_file_path, config, debug):
             print "File name '%s' doesn't match any movie in the local cache or on IMDb." % input_file_path, 
             return 2
         else:
-            (file_name, movie) = match
+            (file_name, movie, disc) = match
 
         metadata = file_manager.generate_movie_metadata(movie)
         if metadata is None:
@@ -687,10 +687,10 @@ def process_movie(file_manager, input_file_path, movie_path, debug, move):
 
             return
         else:
-            (file_name, movie) = match
+            (file_name, movie, disc) = match
 
         library_path = movie_path
-        library_file_name = file_manager.get_movie_library_file_name(file_name, movie)
+        library_file_name = file_manager.get_movie_library_file_name(file_name, movie, disc)
 
         if os.path.exists(os.path.join(library_path, library_file_name)):
             print "Skipping file '%s'.  A file for that episode already exists in the library.\n" % input_file_path, 

@@ -8,21 +8,16 @@ import config
 import database
 import thetvdb
 import utility
-from file_matcher import FileMatcher
+from file_matcher import SeriesMatcher
+from file_matcher import MovieMatcher
 
 RECENT_ADDITIONS = "_Recent Additions"
 
 PY_TIVO_METADATA_EXT = ".txt"
 
-DATE_PATTERN_1='(?P<month1>\d\d)[/-_.](?P<day1>\d\d)[/-_.](?P<year1>\d\d(\d\d)?)'
-DATE_PATTERN_2='(?P<year2>\d\d\d\d)[/-_.](?P<month2>\d\d)[/-_.](?P<day2>\d\d)'
-
-FILE_PATTERN_BY_EPISODE='^.*%s.*s(?P<season>\d+)[-_x\.\ ]?e(?P<episode>\d+).*$'
-FILE_PATTERN_BY_EPISODE_FOLDERS='^.*%s.*/+season[-_.\ ]*(?P<season>\d+)/+(episode[-_.\ ]*)*(?P<episode>\d+).*$'
-FILE_PATTERN_BY_DATE='^.*%s.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D.*$'
-
 SERIES_FILE_NAME='%s-s%02i_e%03i.%s'
 MOVIE_FILE_NAME='%s (%i) [%i].%s'
+MOVIE_WITH_DISC_FILE_NAME='%s (%i) Disc%s [%i].%s'
 
 class FileManager():
     def __init__(self, config, database, thetvdb, moviedb, debug):
@@ -42,11 +37,14 @@ class FileManager():
 
         self.wait_from_file_creation_minutes = int(config.getWaitFromFileCreationInMinutes())
 
-        # create FileMatcher objects for each watched series
+        # create SeriesMatcher objects for each watched series
         self.file_matchers = []
         watched_series = self.database.get_watched_series()
         for series in watched_series:
-            self.file_matchers.append(FileMatcher(config, series, debug))
+            self.file_matchers.append(SeriesMatcher(config, series, debug))
+
+        #create the pattern for movie files
+        self.movie_matcher = MovieMatcher(moviedb, database, config, debug)
 
 
     # returns a tuple of the form: (file_name, series, episode)
@@ -69,32 +67,7 @@ class FileManager():
 
     def match_movie_file(self, file_path, skip_timecheck):
         if skip_timecheck or self.is_time_to_process_file(file_path):
-            (input_path, input_file) = os.path.split(file_path)
-
-            movie = None
-
-            match = re.match('^(?P<name>.*)\[(?P<imdbid>\d+)\]\..*$', input_file)
-            if match:
-                possible_id = int(match.group('imdbid'))
-                name = match.group('name')
-
-                movie = self.database.get_movie(possible_id)
-                if movie is None:
-                    movie = self.moviedb.lookup_movie(name)
-                    if movie is not None:
-                        self.database.add_movie(movie)
-
-            if movie is None:
-                search_text = utility.strip_extension(input_file)
-                movie = self.moviedb.lookup_movie(search_text)
-                if movie is not None:
-                    self.database.add_movie(movie)
-
-            if movie is None:
-                return None
-            else:
-                return (input_file, movie)        
-
+            return self.movie_matcher.match(file_path)
 
     def is_time_to_process_file(self, file_path):
         now = datetime.now()
@@ -270,9 +243,12 @@ class FileManager():
         return SERIES_FILE_NAME % ('_'.join(split_title), episode.season_number, episode.episode_number, extension)
 
 
-    def get_movie_library_file_name(self, file_name, movie):
+    def get_movie_library_file_name(self, file_name, movie, disc):
         (file, extension) = utility.split_file_name(file_name)
-        return MOVIE_FILE_NAME % (movie.title, movie.movie_year, movie.id, extension)
+        if disc is None:
+            return MOVIE_FILE_NAME % (movie.title, movie.movie_year, movie.id, extension)
+        else:
+            return MOVIE_WITH_DISC_FILE_NAME % (movie.title, movie.movie_year, disc, movie.id, extension)
 
 
     def get_library_path(self, library_base_path, episode):

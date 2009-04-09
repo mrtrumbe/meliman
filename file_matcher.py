@@ -11,6 +11,102 @@ FILE_PATTERN_BY_DATE='^.*\D(' + DATE_PATTERN_1 + '|' + DATE_PATTERN_2 + ')\D.*$'
 SERIES_TITLE_SEPARATOR_PATTERN='[^\\\/]+'
 SERIES_TITLE_PATTERN='^.*%s.*$'
 
+MOVIE_NAME_FILE_PATTERN='(?P<name1>.+)(\(\d+\)).*'
+MOVIE_YEAR_FILE_PATTERN='.*\((?P<year>\d+)\).*'
+MOVIE_DISC_FILE_PATTERN='.*(?:(?:disc|dvd)[\ _\-\.]*(?P<discnum>[\d]+)).*'
+MOVIE_IMDB_FILE_PATTERN='.*(?:\[(?P<imdbid>\d+)\]).*'
+
+
+class MovieMatcher():
+    def __init__(self, moviedb, database, config, debug):
+        self.moviedb = moviedb
+        self.database = database
+        self.config = config
+        self.debug = debug
+
+        self.name_re = re.compile(MOVIE_NAME_FILE_PATTERN, re.IGNORECASE)
+        self.year_re = re.compile(MOVIE_YEAR_FILE_PATTERN, re.IGNORECASE)
+        self.disc_re = re.compile(MOVIE_DISC_FILE_PATTERN, re.IGNORECASE)
+        self.imdb_re = re.compile(MOVIE_IMDB_FILE_PATTERN, re.IGNORECASE)
+
+
+    def match(self, movie_file_path):
+        (file_path, file_name) = os.path.split(movie_file_path)
+
+        movie = None
+
+        # if there is disc information embedded in the name, 
+        #   we want to know about it no matter which way we match
+        disc_num = self.get_disc(file_name)
+
+        # see if the file name has an imdb id...the fastest of matches
+        imdb_id = self.get_imdb_id(file_name)
+        if imdb_id is not None:
+            movie = self.database.get_movie(imdb_id)
+            if movie is not None:
+                self.database.add_movie(movie)
+
+        # if that didn't work, try to harvest the name and year via
+        #   regular expressions and do an imdb lookup with the info
+        if movie is None:
+            name = self.get_name(file_name)
+            year = self.get_year(file_name)
+
+            if name is not None:
+                to_lookup = name.strip()
+                if year is not None:
+                    to_lookup += " (%i)" % (year, )
+
+                movie = self.moviedb.lookup_movie(name)
+                if movie is not None:
+                    self.database.add_movie(movie)
+
+        # if all of our matching magic fails, let imdb try to figure
+        #   it out from the file name (with the ext removed)
+        if movie is None:
+            (file, extension) = utility.split_file_name(file_name)
+
+            movie = self.moviedb.lookup_movie(name)
+            if movie is not None:
+                self.database.add_movie(movie)
+
+        if movie is None:
+            return None
+        else:
+            return (file_name, movie, disc_num)
+
+
+    def get_name(self, file_name):
+        match = self.name_re.match(file_name)
+        if match:
+            return match.group('name1')
+        else:
+            return None
+
+    def get_year(self, file_name):
+        match = self.year_re.match(file_name)
+        if match:
+            return int(match.group('year'))
+        else:
+            return None
+
+    def get_disc(self, file_name):
+        match = self.disc_re.match(file_name)
+        if match:
+            return int(match.group('discnum'))
+        else:
+            return None
+
+    def get_imdb_id(self, file_name):
+        match = self.imdb_re.match(file_name)
+        if match:
+            return int(match.group('imdbid'))
+        else:
+            return None
+
+
+
+
 
 class EpisodeMatch():
     def __init__(self, file_name, series, debug, season_number, episode_number):
@@ -59,7 +155,7 @@ class DateMatch():
         return episode
 
 
-class FileMatcher():
+class SeriesMatcher():
     def __init__(self, config, series, debug):
         self.config = config
         self.series = series
@@ -145,5 +241,6 @@ class FileMatcher():
             return raw_year + 1900
         else:
             return raw_year + 2000
+
 
 
