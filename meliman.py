@@ -88,7 +88,8 @@ def parse_options():
     # Library Management Actions
     library_group = OptionGroup(opt_parser, "Library Management Actions", "Actions for adding to and cleaning up your library")
     library_group.add_option("-r", "--regenerate", action="store_true", dest="regenerate", help="Regenerates metadata for the library directories.  Any existing metadata will be overwritten.")
-    library_group.add_option("-g", "--generate", action="store", dest="generate", help="Recursively traverses the provided directory, generating metadata and tagging each media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
+    library_group.add_option("-g", "--generate_series", action="store", dest="generate_series", help="Recursively traverses the provided directory, generating metadata and tagging each series media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
+    library_group.add_option("-G", "--generate_movies", action="store", dest="generate_movies", help="Recursively traverses the provided directory, generating metadata and tagging each movie media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
     library_group.add_option("-p", "--process", action="store_true", dest="process", help="Processes files in the incoming directory and organizes the media library.")
     opt_parser.add_option_group(library_group)
 
@@ -122,7 +123,8 @@ def do_action(options, args, config, debug, move):
         options.series_metadata, 
         options.movie_metadata, 
 
-        options.generate, 
+        options.generate_series, 
+        options.generate_movies, 
         options.regenerate, 
         options.process)
 
@@ -168,8 +170,10 @@ def do_action(options, args, config, debug, move):
         elif options.movie_metadata:
             return do_movie_metadata(options.movie_metadata, config, debug)
 
-        elif options.generate:
-            return do_generate(options.generate, config, debug)
+        elif options.generate_series:
+            return do_generate(options.generate_series, True, config, debug)
+        elif options.generate_movies:
+            return do_generate(options.generate_movies, False, config, debug)
         elif options.regenerate:
             return do_regenerate(config, debug)
         elif options.process:
@@ -529,7 +533,7 @@ def do_movie_metadata(input_file_path, config, debug):
         return 11
 
 
-def do_generate(input_directory, config, debug):
+def do_generate(input_directory, is_series_dir, config, debug):
     if not os.path.exists(input_directory):
         print "Directory '%s' does not exist. Exiting." % input_directory,
         return 1
@@ -547,7 +551,10 @@ def do_generate(input_directory, config, debug):
                     files.append((root, file))
 
         for (root, file) in files:
-            generate_for_file(file_manager, root, file)
+            if is_series_dir:
+                generate_for_episode_file(file_manager, root, file)
+            else:
+                generate_for_movie_file(file_manager, root, file)
 
         return 0
     except:
@@ -557,7 +564,10 @@ def do_generate(input_directory, config, debug):
 
 def do_regenerate(config, debug):
     tv_path = config.getLibraryTvPath()
-    do_generate(tv_path, config, debug)
+    do_generate(tv_path, True, config, debug)
+
+    movie_path = config.getLibraryMoviePath()
+    do_generate(movie_path, False, config, debug)
 
 
 def do_process(config, debug, move):
@@ -714,9 +724,7 @@ def process_movie(file_manager, input_file_path, movie_path, debug, move):
 
 
 
-
-
-def generate_for_file(file_manager, root, file):
+def generate_for_episode_file(file_manager, root, file):
     try:
         file_path = os.path.join(root, file)
         match = file_manager.match_file(file_path, True)
@@ -734,6 +742,28 @@ def generate_for_file(file_manager, root, file):
     except:
         traceback.print_exc()
         print "Unexpected error while processing file '%s'. Skipping.\n" % file_path, 
+
+
+def generate_for_movie_file(file_manager, root, file):
+    try:
+        file_path = os.path.join(root, file)
+        match = file_manager.match_movie_file(file_path, True)
+        if match is None:
+            print "Skipping non-matching or invalid file '%s'.\n" % file_path, 
+            return
+        else:
+            (file_name, movie, discnum) = match
+
+        file_manager.clear_existing_metadata(root, file)
+        metadata = file_manager.generate_movie_metadata(movie)
+        if not file_manager.write_metadata(root, file, metadata):
+            print "Error writing metadata.\n"
+
+    except:
+        traceback.print_exc()
+        print "Unexpected error while processing file '%s'. Skipping.\n" % file_path, 
+
+
 
 
 # Returns all cached episodes (if there are any) or all episodes available from thetvdb
