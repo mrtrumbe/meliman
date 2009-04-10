@@ -22,28 +22,35 @@ input_path=/src/meliman/tmp/input
 
 
 # The application will watch this directory for new files
-#   and will process any media files matching watched series
+#   and will process any media files matching imdb
 
 movie_input_path=/src/meliman/tmp/movie_input
 
 
 # This is the library folder for TV shows imported by
-#   the application.  The application will 'own'
-#   this folder, so don't try to change its contents.
+#   the application
 
 tv_path=/src/meliman/tmp/tv
 
 
-# This is the library folder for TV shows imported by
-#   the application.  The application will 'own'
-#   this folder, so don't try to change its contents.
+# This is the library folder for TV shows oganized by genre
+
+tv_genre_path=/src/meliman/tmp/tv_genres
+
+
+# This is the library folder for movies imported by
+#   the application.  
 
 movie_path=/src/meliman/tmp/movies
 
 
+# This is the library folder for TV shows oganized by genre
+
+movie_genre_path=/src/meliman/tmp/movie_genres
+
+
 # This is the library folder for recent media files 
-#   imported by the application.  The application will 
-#   'own' this folder, so don't try to change its contents.
+#   imported by the application.  
 
 recent_path=/src/meliman/tmp/recent
 

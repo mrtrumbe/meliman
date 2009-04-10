@@ -90,6 +90,7 @@ def parse_options():
     library_group.add_option("-r", "--regenerate", action="store_true", dest="regenerate", help="Regenerates metadata for the library directories.  Any existing metadata will be overwritten.")
     library_group.add_option("-g", "--generate_series", action="store", dest="generate_series", help="Recursively traverses the provided directory, generating metadata and tagging each series media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
     library_group.add_option("-G", "--generate_movies", action="store", dest="generate_movies", help="Recursively traverses the provided directory, generating metadata and tagging each movie media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
+    library_group.add_option("-n", "--generate_genres", action="store_true", dest="generate_genres", help="Regenerates the genres folder for both movies and tv in the library.", metavar="DIRECTORY")
     library_group.add_option("-p", "--process", action="store_true", dest="process", help="Processes files in the incoming directory and organizes the media library.")
     opt_parser.add_option_group(library_group)
 
@@ -126,6 +127,7 @@ def do_action(options, args, config, debug, move):
         options.generate_series, 
         options.generate_movies, 
         options.regenerate, 
+        options.generate_genres, 
         options.process)
 
     true_count=0
@@ -176,6 +178,8 @@ def do_action(options, args, config, debug, move):
             return do_generate(options.generate_movies, False, config, debug)
         elif options.regenerate:
             return do_regenerate(config, debug)
+        elif options.generate_genres:
+            return do_rebuild_genres(config, debug)
         elif options.process:
             return do_process(config, debug, move)
     else:
@@ -573,6 +577,58 @@ def do_regenerate(config, debug):
         print "Configuration setting 'movie_path' in section 'Library' is missing. Will not regenerate movie metadata."
 
 
+def do_rebuild_genres(config, debug):
+    tv_path = config.getLibraryTvPath()
+    tv_genre_path = config.getLibraryTvGenrePath()
+    if tv_path is None:
+        print "Configuration setting 'tv_path' in section 'Library' is missing. Will not build tv genres."
+    elif tv_genre_path is None:
+        print "Configuration setting 'tv_genre_path' in section 'Library' is missing. Will not build tv genres."
+    else:
+        do_build_genres(tv_path, tv_genre_path, True, True, config, debug)
+
+    movie_path = config.getLibraryMoviePath()
+    movie_genre_path = config.getLibraryMovieGenrePath()
+    if movie_path is None:
+        print "Configuration setting 'movie_path' in section 'Library' is missing. Will not build movie genres."
+    elif movie_genre_path is None:
+        print "Configuration setting 'movie_genre_path' in section 'Library' is missing. Will not build movie genres."
+    else:
+        do_build_genres(movie_path, movie_genre_path, False, True, config, debug)
+
+
+
+def do_build_genres(input_directory, genre_path, is_series_dir, act_immediately, config, debug):
+    if not os.path.exists(input_directory):
+        print "Directory '%s' does not exist. Exiting." % input_directory,
+        return 1
+
+    try:
+        thetvdb = TheTvDb(config, debug)
+        moviedb = MovieDB(config, debug)
+        database = Database(config, debug)
+        file_manager = FileManager(config, database, thetvdb, moviedb, debug)
+
+        files = []
+        for root, dir, files_to_add in os.walk(input_directory):
+            for file in files_to_add:
+                if file_manager.is_media_file(file):
+                    files.append((root, file))
+
+        for (root, file) in files:
+            if is_series_dir:
+                build_genres_for_episode_file(file_manager, genre_path, root, file, act_immediately)
+            else:
+                build_genres_for_movie_file(file_manager, genre_path, root, file, act_immediately)
+
+        return 0
+    except:
+        traceback.print_exc()
+        return 11
+
+
+
+
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
     moviedb = MovieDB(config, debug)
@@ -588,18 +644,20 @@ def do_process(config, debug, move):
         try:
             input_path = config.getLibraryInputPath()
             tv_path = config.getLibraryTvPath()
+            tv_genre_path = config.getLibraryTvGenrePath()
 
             movie_input_path = config.getLibraryMovieInputPath()
             movie_path = config.getLibraryMoviePath()
+            movie_genre_path = config.getLibraryMovieGenrePath()
 
-            process_tv(input_path, tv_path, file_manager, debug, move)
+            process_tv(input_path, tv_path, tv_genre_path, file_manager, debug, move)
 
             if movie_input_path is None:
                 print "Configuration setting 'movie_input_path' in section 'Library' is missing. Will not attempt processing of movies."
             elif movie_path is None:
                 print "Configuration setting 'movie_path' in section 'Library' is missing. Will not attempt processing of movies."
             else:
-                process_movies(movie_input_path, movie_path, file_manager, debug, move)
+                process_movies(movie_input_path, movie_path, movie_genre_path, file_manager, debug, move)
 
             file_manager.cleanup_recent_folder()
         except:
@@ -624,7 +682,7 @@ def get_movie_by_id(id, moviedb, database):
     return movie
 
 
-def process_tv(input_path, tv_path, file_manager, debug, move):
+def process_tv(input_path, tv_path, tv_genre_path, file_manager, debug, move):
     if not os.path.exists(input_path):
         print "Input path '%s' does not exist. Exiting." % input_path,
         return 1
@@ -643,11 +701,11 @@ def process_tv(input_path, tv_path, file_manager, debug, move):
     for (root, file) in files:
         file_path = os.path.join(root, file)
         if os.path.isfile(file_path):
-            process_episode(file_manager, file_path, tv_path, debug, move)
+            process_episode(file_manager, file_path, tv_path, tv_genre_path, debug, move)
 
 
 
-def process_episode(file_manager, input_file_path, tv_path, debug, move):
+def process_episode(file_manager, input_file_path, tv_path, tv_genre_path, debug, move):
     try:
         match = file_manager.match_file(input_file_path, False)
         if match is None:
@@ -677,12 +735,16 @@ def process_episode(file_manager, input_file_path, tv_path, debug, move):
         if not file_manager.add_to_recent(library_path, library_file_name):
             print "Error adding media to recent additions.\n"
             return 
+
+        if tv_genre_path is not None:
+            build_genres_for_episode_file(file_manager, tv_genre_path, library_path, library_file_name, False)
+
     except:
         traceback.print_exc()
         print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
 
 
-def process_movies(input_path, movie_path, file_manager, debug, move):
+def process_movies(input_path, movie_path, movie_genre_path, file_manager, debug, move):
     if os.path.exists(input_path) and os.path.exists(movie_path):
         files = []
         for root, dir, files_to_add in os.walk(input_path):
@@ -694,10 +756,10 @@ def process_movies(input_path, movie_path, file_manager, debug, move):
         for (root, file) in files:
             file_path = os.path.join(root, file)
             if os.path.isfile(file_path):
-                process_movie(file_manager, file_path, movie_path, debug, move)
+                process_movie(file_manager, file_path, movie_path, movie_genre_path, debug, move)
 
 
-def process_movie(file_manager, input_file_path, movie_path, debug, move):
+def process_movie(file_manager, input_file_path, movie_path, movie_genre_path, debug, move):
     try:
         match = file_manager.match_movie_file(input_file_path, False)
         if match is None:
@@ -727,10 +789,13 @@ def process_movie(file_manager, input_file_path, movie_path, debug, move):
         if not file_manager.add_to_recent(library_path, library_file_name):
             print "Error adding media to recent additions.\n"
             return 
+
+        if movie_genre_path is not None:
+            build_genres_for_movie_file(file_manager, movie_genre_path, library_path, library_file_name, False)
+
     except:
         traceback.print_exc()
         print "Unexpected error while processing file '%s'. Skipping.\n" % input_file_path, 
-
 
 
 def generate_for_episode_file(file_manager, root, file):
@@ -771,6 +836,44 @@ def generate_for_movie_file(file_manager, root, file):
     except:
         traceback.print_exc()
         print "Unexpected error while processing file '%s'. Skipping.\n" % file_path, 
+
+
+def build_genres_for_episode_file(file_manager, genre_path, root, file, act_immediately):
+    try:
+        file_path = os.path.join(root, file)
+        match = file_manager.match_file(file_path, act_immediately)
+        if match is None:
+            return
+        else:
+            (file_name, series, episode) = match
+
+        (series_dir, season_dir_name) = os.path.split(root)
+        (real_root, series_dir_name) = os.path.split(series_dir)
+        print (real_root, series_dir_name)
+        file_manager.add_to_genres(series, genre_path, real_root, series_dir_name, True)
+
+    except:
+        traceback.print_exc()
+        print "Unexpected error while processing file '%s'. Skipping.\n" % file_path, 
+
+
+def build_genres_for_movie_file(file_manager, genre_path, root, file, act_immediately):
+    try:
+        file_path = os.path.join(root, file)
+        match = file_manager.match_movie_file(file_path, act_immediately)
+        if match is None:
+            return
+        else:
+            (file_name, movie, discnum) = match
+
+        file_manager.add_to_genres(movie, genre_path, root, file_path, False)
+
+    except:
+        traceback.print_exc()
+        print "Unexpected error while processing file '%s'. Skipping.\n" % file_path, 
+
+
+
 
 
 

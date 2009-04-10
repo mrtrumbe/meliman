@@ -48,9 +48,21 @@ class MelimanConfig:
     def getLibraryTvPath(self):
         return self.config.get('Library', 'tv_path')
 
+    def getLibraryTvGenrePath(self):
+        try:
+            return self.config.get('Library', 'tv_genre_path')
+        except:
+            return None
+
     def getLibraryMoviePath(self):
         try:
             return self.config.get('Library', 'movie_path')
+        except:
+            return None
+
+    def getLibraryMovieGenrePath(self):
+        try:
+            return self.config.get('Library', 'movie_genre_path')
         except:
             return None
 

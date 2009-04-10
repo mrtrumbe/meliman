@@ -30,6 +30,9 @@ class FileManager():
         self.recent_duration_in_minutes = config.getLibraryRecentDurationInMinutes()
         self.recent_path = config.getLibraryRecentPath()
 
+        self.tv_genre_path = config.getLibraryTvGenrePath()
+        self.movie_genre_path = config.getLibraryMovieGenrePath()
+
         self.media_file_extension_str = config.getMediaFileExtensions()
         self.file_extensions = self.media_file_extension_str.split(',')
 
@@ -176,22 +179,61 @@ class FileManager():
         media_file_path = os.path.join(library_path, library_file_name)
         recent_file_path = os.path.join(self.recent_path, recent_file_name)
 
+        meta_file_path = None
         if self.format == 'pyTivo':
             meta_file_path = media_file_path + PY_TIVO_METADATA_EXT
             recent_meta_file_path = recent_file_path + PY_TIVO_METADATA_EXT
-        else:
-            return False
 
         try:
             if not os.path.exists(self.recent_path):
                 os.makedirs(self.recent_path)
 
             os.symlink(media_file_path, recent_file_path)
-            os.symlink(meta_file_path, recent_meta_file_path)
+
+            if meta_file_path is not None:
+                os.symlink(meta_file_path, recent_meta_file_path)
 
             return True
         except:
             return False
+
+
+    def add_to_genres(self, genre_provider, genre_root_path, library_path, to_add_name, to_add_is_dir):
+        if genre_root_path is None:
+           return False
+
+        if genre_provider.genres is None or len(genre_provider.genres) == 0:
+           return False
+
+        if not os.path.exists(genre_root_path):
+            os.makedirs(genre_root_path)
+
+        media_path = os.path.join(library_path, to_add_name)
+        meta_path = None
+        if not to_add_is_dir and self.format == 'pyTivo':
+            meta_path = media_path + PY_TIVO_METADATA_EXT
+
+        for genre in genre_provider.genres:
+            if genre is not None and genre.strip() != '':
+                genre_path = os.path.join(genre_root_path, genre)
+                media_genre_path = os.path.join(genre_path, to_add_name)
+
+                if not os.path.exists(genre_path):
+                    os.makedirs(genre_path)
+
+                if not os.path.exists(media_genre_path):
+                    print media_path
+                    print media_genre_path
+                    os.symlink(media_path, media_genre_path)
+
+                if not to_add_is_dir and self.format == 'pyTivo':
+                    meta_genre_path = media_genre_path + PY_TIVO_METADATA_EXT
+                    if not os.path.exists(meta_genre_path):
+                        print meta_path
+                        print meta_genre_path
+                        os.symlink(meta_path, meta_genre_path)
+
+        return True
 
 
     def cleanup_recent_folder(self):
