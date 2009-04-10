@@ -416,7 +416,7 @@ def do_refresh_movie(movie_id_str, config, debug):
         try:
             movie_id = int(movie_id_str)
         except:
-            print "Argument is not a valid series id: %s" % (movie_id_str, )
+            print "Argument is not a valid movie id: %s" % (movie_id_str, )
             return 1
 
         database.clear_movie(movie_id)
@@ -567,7 +567,10 @@ def do_regenerate(config, debug):
     do_generate(tv_path, True, config, debug)
 
     movie_path = config.getLibraryMoviePath()
-    do_generate(movie_path, False, config, debug)
+    if movie_path is not None:
+        do_generate(movie_path, False, config, debug)
+    else:
+        print "Configuration setting 'movie_path' in section 'Library' is missing. Will not regenerate movie metadata."
 
 
 def do_process(config, debug, move):
@@ -590,7 +593,13 @@ def do_process(config, debug, move):
             movie_path = config.getLibraryMoviePath()
 
             process_tv(input_path, tv_path, file_manager, debug, move)
-            process_movies(movie_input_path, movie_path, file_manager, debug, move)
+
+            if movie_input_path is None:
+                print "Configuration setting 'movie_input_path' in section 'Library' is missing. Will not attempt processing of movies."
+            elif movie_path is None:
+                print "Configuration setting 'movie_path' in section 'Library' is missing. Will not attempt processing of movies."
+            else:
+                process_movies(movie_input_path, movie_path, file_manager, debug, move)
 
             file_manager.cleanup_recent_folder()
         except:
