@@ -849,7 +849,6 @@ def build_genres_for_episode_file(file_manager, genre_path, root, file, act_imme
 
         (series_dir, season_dir_name) = os.path.split(root)
         (real_root, series_dir_name) = os.path.split(series_dir)
-        print (real_root, series_dir_name)
         file_manager.add_to_genres(series, genre_path, real_root, series_dir_name, True)
 
     except:
@@ -866,7 +865,7 @@ def build_genres_for_movie_file(file_manager, genre_path, root, file, act_immedi
         else:
             (file_name, movie, discnum) = match
 
-        file_manager.add_to_genres(movie, genre_path, root, file_path, False)
+        file_manager.add_to_genres(movie, genre_path, root, file, False)
 
     except:
         traceback.print_exc()

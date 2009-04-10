@@ -200,10 +200,10 @@ class FileManager():
 
     def add_to_genres(self, genre_provider, genre_root_path, library_path, to_add_name, to_add_is_dir):
         if genre_root_path is None:
-           return False
+            return False
 
         if genre_provider.genres is None or len(genre_provider.genres) == 0:
-           return False
+            return False
 
         if not os.path.exists(genre_root_path):
             os.makedirs(genre_root_path)
@@ -222,15 +222,11 @@ class FileManager():
                     os.makedirs(genre_path)
 
                 if not os.path.exists(media_genre_path):
-                    print media_path
-                    print media_genre_path
                     os.symlink(media_path, media_genre_path)
 
                 if not to_add_is_dir and self.format == 'pyTivo':
                     meta_genre_path = media_genre_path + PY_TIVO_METADATA_EXT
                     if not os.path.exists(meta_genre_path):
-                        print meta_path
-                        print meta_genre_path
                         os.symlink(meta_path, meta_genre_path)
 
         return True
