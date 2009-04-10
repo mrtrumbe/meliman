@@ -155,6 +155,7 @@ class Movie(MetaData):
 
         to_return.append('isEpisode : false')
         to_return.append('title : %s' % self.title, )
+        to_return.append('seriesTitle : %s' % self.title, )
         to_return.append('time : %s' % self.time.strftime('%Y-%m-%dT%H:%M:%SZ'), )
         to_return.append('movieYear : %s' % self.movie_year, )
 
