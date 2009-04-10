@@ -53,7 +53,7 @@ def parse_options():
     lookup_group = OptionGroup(opt_parser, "Lookup Actions", "Actions for looking up series, episodes and movies")
     lookup_group.add_option("-s", "--series-lookup", action="store", dest="series_lookup", help="Lookup the TV series matching the provided string.", metavar="SERIES_NAME")
     lookup_group.add_option("-e", "--episode-lookup", action="store", dest="episode_lookup", help="Lookup the TV episode matching the pattern: 'series_id[:season_number[:episode_number]]'", metavar="EPISODE_PATTERN")
-    lookup_group.add_option("-S", "--movie-lookup", action="store", dest="movie_lookup", help="Lookup the Movie on IMDb matching the provided text. If only an integer is provided, it is assumed to be the movie's id and the local cache is consulted before going to IMDb. Include the full name of the movie and, in parenthesis, the year the movie was released to better match results on IMDb. Example:\t./meliman.py -o 'Chicago (2002)'", metavar="MOVIE_SEARCH_TEXT")
+    lookup_group.add_option("-o", "--movie-lookup", action="store", dest="movie_lookup", help="Lookup the Movie on IMDb matching the provided text. If only an integer is provided, it is assumed to be the movie's id and the local cache is consulted before going to IMDb. Include the full name of the movie and, in parenthesis, the year the movie was released to better match results on IMDb. Example:\t./meliman.py -o 'Chicago (2002)'", metavar="MOVIE_SEARCH_TEXT")
     opt_parser.add_option_group(lookup_group)
     
 
