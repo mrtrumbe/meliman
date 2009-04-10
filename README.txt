@@ -62,13 +62,15 @@ generates metadata for the media file and the third generates a library friendly
 version of the media file's name.
 
 Once you have started watching some TV series with Meliman, you can use Meliman to
-watch an incoming directory and copy/move media files to a library directory, tagging
-the file with metadata in the process.  To make this work, you'll want to properly 
-setup entries in your configuration file.  These three settings, in particular, are 
-important:
+watch an incoming directory and copy/move media files to your library directory, 
+tagging the file with metadata in the process.  To make this work, you'll need to 
+properly setup entries in your configuration file.  These settings, in particular, 
+are important:
 
     input_path=/src/meliman/tmp/input
+    movie_input_path=/src/meliman/tmp/movie_input
     tv_path=/src/meliman/tmp/tv
+    movie_path=/src/meliman/tmp/movies
     recent_path=/src/meliman/tmp/recent
 
 Once you are properly configured, you should be able to run meliman in "process mode," 
@@ -95,9 +97,6 @@ More information about running Meliman can be found in the template configuratio
 file and using meliman's help option:
 
     # ./meliman.py --help
-
-Meliman doesn't currently manage movies for your library.  This functionality should
-be available soon.
 
 
 Feature list:
