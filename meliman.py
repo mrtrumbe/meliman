@@ -640,31 +640,31 @@ def do_process(config, debug, move):
     if lock is None:
         print "Another instance of media_library_manager is currently processing.  Exiting."
         return 3
-    else:
-        try:
-            input_path = config.getLibraryInputPath()
-            tv_path = config.getLibraryTvPath()
-            tv_genre_path = config.getLibraryTvGenrePath()
 
-            movie_input_path = config.getLibraryMovieInputPath()
-            movie_path = config.getLibraryMoviePath()
-            movie_genre_path = config.getLibraryMovieGenrePath()
+    try:
+        input_path = config.getLibraryInputPath()
+        tv_path = config.getLibraryTvPath()
+        tv_genre_path = config.getLibraryTvGenrePath()
 
-            process_tv(input_path, tv_path, tv_genre_path, file_manager, debug, move)
+        movie_input_path = config.getLibraryMovieInputPath()
+        movie_path = config.getLibraryMoviePath()
+        movie_genre_path = config.getLibraryMovieGenrePath()
 
-            if movie_input_path is None:
-                print "Configuration setting 'movie_input_path' in section 'Library' is missing. Will not attempt processing of movies."
-            elif movie_path is None:
-                print "Configuration setting 'movie_path' in section 'Library' is missing. Will not attempt processing of movies."
-            else:
-                process_movies(movie_input_path, movie_path, movie_genre_path, file_manager, debug, move)
+        process_tv(input_path, tv_path, tv_genre_path, file_manager, debug, move)
 
-            file_manager.cleanup_recent_folder()
-        except:
-            traceback.print_exc()
-            return 11
-        finally:
-            file_manager.relinquish_process_lock()
+        if movie_input_path is None:
+            print "Configuration setting 'movie_input_path' in section 'Library' is missing. Will not attempt processing of movies."
+        elif movie_path is None:
+            print "Configuration setting 'movie_path' in section 'Library' is missing. Will not attempt processing of movies."
+        else:
+            process_movies(movie_input_path, movie_path, movie_genre_path, file_manager, debug, move)
+
+        file_manager.cleanup_recent_folder()
+    except:
+        traceback.print_exc()
+        return 11
+    finally:
+        file_manager.relinquish_process_lock()
 
 
 
@@ -709,9 +709,7 @@ def process_episode(file_manager, input_file_path, tv_path, tv_genre_path, debug
     try:
         match = file_manager.match_file(input_file_path, False)
         if match is None:
-            if debug:
-                print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
-
+            print "Skipping non-matching or invalid file '%s'.\n" % input_file_path, 
             return
         else:
             (file_name, series, episode) = match
@@ -737,7 +735,7 @@ def process_episode(file_manager, input_file_path, tv_path, tv_genre_path, debug
             return 
 
         if tv_genre_path is not None:
-            build_genres_for_episode_file(file_manager, tv_genre_path, library_path, library_file_name, False)
+            build_genres_for_episode_file(file_manager, tv_genre_path, library_path, library_file_name, True)
 
     except:
         traceback.print_exc()
@@ -791,7 +789,7 @@ def process_movie(file_manager, input_file_path, movie_path, movie_genre_path, d
             return 
 
         if movie_genre_path is not None:
-            build_genres_for_movie_file(file_manager, movie_genre_path, library_path, library_file_name, False)
+            build_genres_for_movie_file(file_manager, movie_genre_path, library_path, library_file_name, True)
 
     except:
         traceback.print_exc()
@@ -823,7 +821,6 @@ def generate_for_movie_file(file_manager, root, file):
         file_path = os.path.join(root, file)
         match = file_manager.match_movie_file(file_path, True)
         if match is None:
-            print "Skipping non-matching or invalid file '%s'.\n" % file_path, 
             return
         else:
             (file_name, movie, discnum) = match

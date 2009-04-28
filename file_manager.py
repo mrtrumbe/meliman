@@ -79,7 +79,7 @@ class FileManager():
 
         if minutes_from_creation > self.wait_from_file_creation_minutes:
             return True
-        elif self.debug:
+        else:
             print "Will not process file '%s' because it is too soon after file creation time. Minutes since creation: %s  Minutes before processing: %s" % (file_path, minutes_from_creation, self.wait_from_file_creation_minutes)
 
         return False
