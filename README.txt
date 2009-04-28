@@ -36,7 +36,7 @@ strategy and do a lookup against IMDb.  Most operations against series are also
 available for movies by just capitalizing the option. Here is what operations for 
 movies look like:
 
-    # ./meliman.py -S "The Simpsons"
+    # ./meliman.py -o "The Simpsons"
     96697: The Simpsons (1989)
     462538: The Simpsons Movie (2007)
     296852: The Simpsons (1991)
