@@ -1,6 +1,7 @@
 Meliman - A tool for organizing and tagging your media library.
 
-Currently unversioned.
+    Currently unversioned.
+    Meliman is distributed under the BSD license. See LICENSE.txt for more information.
 
 
 == FEATURES ==
@@ -102,11 +103,14 @@ file and using meliman's help option:
 Feature list:
     - Lookup series from thetvdb.com based on a search string
     - Lookup episodes from thetvdb.com based on a search string
-    - Caches series and episode data locally to prevent frequent network access
+    - Lookup movies from imdb.com based on a search string
+    - Caches movies, series and episode data locally to prevent frequent network access
     - Generates cleaned-up file names for media files based on metadata
     - Generates metadata for media files
     - Manages a library directory structured by series name, seasons and episode numbers
-    - Watches an incoming directory for new media files and copies those files to the library
+    - Generates Genre folders for series and movies 
+    - Watches an incoming directory for new media files and copies those files to 
+        the library, properly tagging and naming those files
     - Maintains a list of recently added media files in the library
 
 Planned improvements:
