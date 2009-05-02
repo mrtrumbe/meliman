@@ -92,6 +92,8 @@ def parse_options():
     library_group.add_option("-G", "--generate_movies", action="store", dest="generate_movies", help="Recursively traverses the provided directory, generating metadata and tagging each movie media file found in the directory.  Any existing metadata will be overwritten.", metavar="DIRECTORY")
     library_group.add_option("-n", "--generate_genres", action="store_true", dest="generate_genres", help="Regenerates the genres folder for both movies and tv in the library.", metavar="DIRECTORY")
     library_group.add_option("-p", "--process", action="store_true", dest="process", help="Processes files in the incoming directory and organizes the media library.")
+    library_group.add_option("-j", "--process_tv", action="store_true", dest="process_tv", help="Just processes tv files in the incoming directory and organizes the tv media library.")
+    library_group.add_option("-J", "--process_movies", action="store_true", dest="process_movies", help="Just processes movie files in the incoming directory and organizes the tv media library.")
     opt_parser.add_option_group(library_group)
 
     return opt_parser.parse_args()
@@ -128,63 +130,69 @@ def do_action(options, args, config, debug, move):
         options.generate_movies, 
         options.regenerate, 
         options.generate_genres, 
-        options.process)
+        options.process,
+        options.process_tv,
+        options.process_movies)
 
     true_count=0
     for arg in action_args:
         if arg:
             true_count=true_count+1
 
-    if true_count == 1:
-        if options.series_lookup:
-            return do_series_lookup(options.series_lookup, config, debug)
-        elif options.episode_lookup:
-            return do_episode_lookup(options.episode_lookup, config, debug)
-        elif options.movie_lookup:
-            return do_movie_lookup(options.movie_lookup, config, debug)
-
-        elif options.watch_series:
-            return do_watch_series(options.watch_series, config, debug)
-        elif options.unwatch_series:
-            return do_unwatch_series(options.unwatch_series, config, debug)
-        elif options.list_watched_series:
-            return do_list_watched_series(config, debug)
-
-        elif options.list_cached_series:
-            return do_list_cached_series(config, debug)
-        elif options.list_cached_movies:
-            return do_list_cached_movies(config, debug)
-        elif options.clear_series:
-            return do_clear_series(options.clear_series, config, debug)
-        elif options.clear_movie:
-            return do_clear_movie(options.clear_movie, config, debug)
-        elif options.refresh_series:
-            return do_refresh_series(options.refresh_series, config, debug)
-        elif options.refresh_movie:
-            return do_refresh_movie(options.refresh_movie, config, debug)
-
-        elif options.series_name:
-            return do_series_name(options.series_name, config, debug)
-        elif options.movie_name:
-            return do_movie_name(options.movie_name, config, debug)
-        elif options.series_metadata:
-            return do_series_metadata(options.series_metadata, config, debug)
-        elif options.movie_metadata:
-            return do_movie_metadata(options.movie_metadata, config, debug)
-
-        elif options.generate_series:
-            return do_generate(options.generate_series, True, config, debug)
-        elif options.generate_movies:
-            return do_generate(options.generate_movies, False, config, debug)
-        elif options.regenerate:
-            return do_regenerate(config, debug)
-        elif options.generate_genres:
-            return do_rebuild_genres(config, debug)
-        elif options.process:
-            return do_process(config, debug, move)
-    else:
+    if true_count != 1:
         print "ERROR - You must provide exactly one action option."
         return 1
+
+    if options.series_lookup:
+        return do_series_lookup(options.series_lookup, config, debug)
+    elif options.episode_lookup:
+        return do_episode_lookup(options.episode_lookup, config, debug)
+    elif options.movie_lookup:
+        return do_movie_lookup(options.movie_lookup, config, debug)
+
+    elif options.watch_series:
+        return do_watch_series(options.watch_series, config, debug)
+    elif options.unwatch_series:
+        return do_unwatch_series(options.unwatch_series, config, debug)
+    elif options.list_watched_series:
+        return do_list_watched_series(config, debug)
+
+    elif options.list_cached_series:
+        return do_list_cached_series(config, debug)
+    elif options.list_cached_movies:
+        return do_list_cached_movies(config, debug)
+    elif options.clear_series:
+        return do_clear_series(options.clear_series, config, debug)
+    elif options.clear_movie:
+        return do_clear_movie(options.clear_movie, config, debug)
+    elif options.refresh_series:
+        return do_refresh_series(options.refresh_series, config, debug)
+    elif options.refresh_movie:
+        return do_refresh_movie(options.refresh_movie, config, debug)
+
+    elif options.series_name:
+        return do_series_name(options.series_name, config, debug)
+    elif options.movie_name:
+        return do_movie_name(options.movie_name, config, debug)
+    elif options.series_metadata:
+        return do_series_metadata(options.series_metadata, config, debug)
+    elif options.movie_metadata:
+        return do_movie_metadata(options.movie_metadata, config, debug)
+
+    elif options.generate_series:
+        return do_generate(options.generate_series, True, config, debug)
+    elif options.generate_movies:
+        return do_generate(options.generate_movies, False, config, debug)
+    elif options.regenerate:
+        return do_regenerate(config, debug)
+    elif options.generate_genres:
+        return do_rebuild_genres(config, debug)
+    elif options.process:
+        return do_process(config, debug, move)
+    elif options.process_tv:
+        return do_process_tv(config, debug, move)
+    elif options.process_movies:
+        return do_process_movies(config, debug, move)
 
 
 def do_series_lookup(name, config, debug):
@@ -628,7 +636,6 @@ def do_build_genres(input_directory, genre_path, is_series_dir, act_immediately,
 
 
 
-
 def do_process(config, debug, move):
     thetvdb = TheTvDb(config, debug)
     moviedb = MovieDB(config, debug)
@@ -665,6 +672,66 @@ def do_process(config, debug, move):
         return 11
     finally:
         file_manager.relinquish_process_lock()
+
+
+def do_process_tv(config, debug, move):
+    thetvdb = TheTvDb(config, debug)
+    moviedb = MovieDB(config, debug)
+    database = Database(config, debug)
+    file_manager = FileManager(config, database, thetvdb, moviedb, debug)
+
+    lock = file_manager.get_process_lock()
+
+    if lock is None:
+        print "Another instance of media_library_manager is currently processing.  Exiting."
+        return 3
+
+    try:
+        input_path = config.getLibraryInputPath()
+        tv_path = config.getLibraryTvPath()
+        tv_genre_path = config.getLibraryTvGenrePath()
+
+        process_tv(input_path, tv_path, tv_genre_path, file_manager, debug, move)
+        file_manager.cleanup_recent_folder()
+    except:
+        traceback.print_exc()
+        return 11
+    finally:
+        file_manager.relinquish_process_lock()
+
+
+def do_process_movies(config, debug, move):
+    thetvdb = TheTvDb(config, debug)
+    moviedb = MovieDB(config, debug)
+    database = Database(config, debug)
+    file_manager = FileManager(config, database, thetvdb, moviedb, debug)
+
+    lock = file_manager.get_process_lock()
+
+    if lock is None:
+        print "Another instance of media_library_manager is currently processing.  Exiting."
+        return 3
+
+    try:
+        movie_input_path = config.getLibraryMovieInputPath()
+        movie_path = config.getLibraryMoviePath()
+        movie_genre_path = config.getLibraryMovieGenrePath()
+
+        if movie_input_path is None:
+            print "Configuration setting 'movie_input_path' in section 'Library' is missing. Will not attempt processing of movies."
+        elif movie_path is None:
+            print "Configuration setting 'movie_path' in section 'Library' is missing. Will not attempt processing of movies."
+        else:
+            process_movies(movie_input_path, movie_path, movie_genre_path, file_manager, debug, move)
+
+        file_manager.cleanup_recent_folder()
+    except:
+        traceback.print_exc()
+        return 11
+    finally:
+        file_manager.relinquish_process_lock()
+
+
 
 
 
