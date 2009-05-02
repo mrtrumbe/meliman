@@ -136,8 +136,7 @@ Requirements:
     * imdbpy (http://imdbpy.sourceforge.net/)
         The easiest way to get imdbpy is probably through setup tools/easy_install.  
         Get setup tools here: http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
-        Once you've installed easy_install, install imdbpy using::
-            easy_install imdbpy
+        Once you've installed easy_install, install imdbpy using: easy_install imdbpy
         You may need to run this with sudo or otherwise escalate your priviledges.
     * A unix-like OS
         While some effort was made to make meliman cross-platform, it has never
@@ -148,11 +147,11 @@ Requirements:
 Installation of Meliman is pretty simple:
     1. Put the Meliman folder wherever you like on your computer (referred to from
        here on as INSTALL_PATH).
-    2. Create a db file for local caching::
-         cd INSTALL_PATH
-         python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
-    3. Create a config file for the application::
-         cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
+    2. Create a db file for local caching: 
+       cd INSTALL_PATH; 
+       python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
+    3. Create a config file for the application: 
+       cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
     4. Edit the config file to point to your db file and the various directories you want 
        to use on your computer.  The example config file is well documented to help you 
        make sensible settings.
