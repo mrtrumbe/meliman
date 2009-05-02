@@ -130,14 +130,14 @@ Planned improvements:
 Requirements 
 ============
 
-    * Python 2.5 or greater (http://www.python.org)
+* Python 2.5 or greater (http://www.python.org)
         Python 3000 will almost surely *not* work.
-    * imdbpy (http://imdbpy.sourceforge.net/)
+* imdbpy (http://imdbpy.sourceforge.net/)
         The easiest way to get imdbpy is probably through setup tools/easy_install.  
         Get setup tools here: http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
         Once you've installed easy_install, install imdbpy using: easy_install imdbpy
         You may need to run this with sudo or otherwise escalate your priviledges.
-    * A unix-like OS
+* A unix-like OS
         While some effort was made to make meliman cross-platform, it has never
         been tested on Windows.  It should run fine on Linux and Mac OS X and
         has been tested on these systems.  Any help in ensuring meliman is truly
