@@ -127,10 +127,9 @@ Planned improvements:
     * A web-based GUI
 
 
-Installation
-============ 
+Requirements 
+============
 
-Requirements: 
     * Python 2.5 or greater (http://www.python.org)
         Python 3000 will almost surely *not* work.
     * imdbpy (http://imdbpy.sourceforge.net/)
@@ -144,8 +143,9 @@ Requirements:
         has been tested on these systems.  Any help in ensuring meliman is truly
         cross platform would be appreciated.
 
-Procedure
-~~~~~~~~~
+
+Installation
+============ 
 
 First, put the Meliman folder wherever you like on your computer (referred to from
 here on as INSTALL_PATH).
