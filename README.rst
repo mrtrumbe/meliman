@@ -145,7 +145,7 @@ Requirements:
         cross platform would be appreciated.
 
 Procedure
----------
+~~~~~~~~~
 
 First, put the Meliman folder wherever you like on your computer (referred to from
 here on as INSTALL_PATH).
