@@ -10,8 +10,8 @@
     Meliman is distributed under the BSD license. See LICENSE.txt for more information.
 
 
-FEATURES
-========
+USAGE
+=====
 
 Managing TV series with Meliman is based on a "watched series" strategy: rather than 
 guessing which series a file belongs to, a user first sets up a list of series which 
@@ -87,11 +87,9 @@ like this::
     # ./meliman.py -p
     Skipping file '/src/meliman/tmp/input/the_simpsons_s5e8.avi'.  
         A file for that episode already exists in the library.
-    Adding file 
-        '/src/meliman/tmp/tv/The Simpsons/Season 05/the_simpsons-s05_e009.avi' 
+    Adding file '/src/meliman/tmp/tv/The Simpsons/Season 05/the_simpsons-s05_e009.avi' 
         to the library.
-    Removing file 
-        '/src/meliman/tmp/recent/2009-02-22_09-48-14_the_simpsons-s05_e008.avi' 
+    Removing file '/src/meliman/tmp/recent/2009-02-22_09-48-14_the_simpsons-s05_e008.avi' 
         from recent additions folder.
 
 You can move/edit files in your library, but it may cause meliman to not understand
@@ -106,6 +104,8 @@ file and using meliman's help option::
 
     # ./meliman.py --help
 
+FEATURES
+========
 
 Feature list:
     * Lookup series from thetvdb.com based on a search string
@@ -117,7 +117,7 @@ Feature list:
     * Manages a library directory structured by series name, seasons and episode numbers
     * Generates Genre folders for series and movies 
     * Watches an incoming directory for new media files and copies those files to 
-        the library, properly tagging and naming those files
+      the library, properly tagging and naming those files
     * Maintains a list of recently added media files in the library
 
 Planned improvements:
@@ -131,12 +131,12 @@ INSTALLATION
 ============ 
 
 Requirements: 
-    * Python 2.5 or greater (w://www.python.org)
-        Python 3000 will almost surely not work.
-    * imdbpy (w://imdbpy.sourceforge.net/)
+    * Python 2.5 or greater (http://www.python.org)
+        Python 3000 will almost surely *not* work.
+    * imdbpy (http://imdbpy.sourceforge.net/)
         The easiest way to get imdbpy is probably through setup tools/easy_install.  
-        Get setup tools here: w://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
-        Once you've installed easy_install, install imdbpy using:
+        Get setup tools here: http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
+        Once you've installed easy_install, install imdbpy using::
             easy_install imdbpy
         You may need to run this with sudo or otherwise escalate your priviledges.
     * A unix-like OS
@@ -146,16 +146,16 @@ Requirements:
         cross platform would be appreciated.
 
 Installation of Meliman is pretty simple:
-    * Put the Meliman folder wherever you like on your computer (referred to from
-        here on as INSTALL_PATH).
-    * Create a db file for local caching:
-        cd INSTALL_PATH
-        python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
-    * Create a config file for the application:
-        cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
-    * Edit the config file to point to your db file and the various directories you want to 
-        use on your computer.  The example config file is well documented to help you make
-        sensible settings.
+    1. Put the Meliman folder wherever you like on your computer (referred to from
+       here on as INSTALL_PATH).
+    2. Create a db file for local caching::
+         cd INSTALL_PATH
+         python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
+    3. Create a config file for the application::
+         cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
+    4. Edit the config file to point to your db file and the various directories you want 
+       to use on your computer.  The example config file is well documented to help you 
+       make sensible settings.
 
 Once you have installed the application, you can immediately use the meliman.py 
 script to operate the program.  Execute the follwing for more information::
