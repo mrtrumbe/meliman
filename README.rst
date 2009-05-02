@@ -10,7 +10,7 @@
     Meliman is distributed under the BSD license. See LICENSE.txt for more information.
 
 
-USAGE
+Usage
 =====
 
 Managing TV series with Meliman is based on a "watched series" strategy: rather than 
@@ -104,7 +104,7 @@ file and using meliman's help option::
 
     # ./meliman.py --help
 
-FEATURES
+Features
 ========
 
 Feature list:
@@ -127,7 +127,7 @@ Planned improvements:
     * A web-based GUI
 
 
-INSTALLATION
+Installation
 ============ 
 
 Requirements: 
@@ -144,17 +144,22 @@ Requirements:
         has been tested on these systems.  Any help in ensuring meliman is truly
         cross platform would be appreciated.
 
-Installation of Meliman is pretty simple:
-    1. Put the Meliman folder wherever you like on your computer (referred to from
-       here on as INSTALL_PATH).
-    2. Create a db file for local caching: 
-       cd INSTALL_PATH; 
-       python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
-    3. Create a config file for the application: 
-       cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
-    4. Edit the config file to point to your db file and the various directories you want 
-       to use on your computer.  The example config file is well documented to help you 
-       make sensible settings.
+Procedure
+---------
+
+First, put the Meliman folder wherever you like on your computer (referred to from
+here on as INSTALL_PATH).
+
+Next, create a db file for local caching::
+    cd INSTALL_PATH; 
+    python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
+
+Now create a config file for the application::
+    cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
+
+Finally, edit the config file to point to your db file and the various directories you 
+want to use on your computer.  The example config file is well documented to help you 
+make sensible settings.
 
 Once you have installed the application, you can immediately use the meliman.py 
 script to operate the program.  Execute the follwing for more information::
