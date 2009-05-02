@@ -2,12 +2,11 @@
  Meliman
 ===========
 
--------------------------------------------------------
- A tool for organizing and tagging your media library.
--------------------------------------------------------
+A tool for organizing and tagging your media library.
 
-    Currently unversioned.
-    Meliman is distributed under the BSD license. See LICENSE.txt for more information.
+Currently unversioned.
+
+Meliman is distributed under the BSD license. See LICENSE.txt for more information.
 
 
 Usage
