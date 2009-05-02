@@ -1,15 +1,22 @@
-Meliman - A tool for organizing and tagging your media library.
+===========
+ Meliman
+===========
+
+-------------------------------------------------------
+ A tool for organizing and tagging your media library.
+-------------------------------------------------------
 
     Currently unversioned.
     Meliman is distributed under the BSD license. See LICENSE.txt for more information.
 
 
-== FEATURES ==
+FEATURES
+========
 
 Managing TV series with Meliman is based on a "watched series" strategy: rather than 
 guessing which series a file belongs to, a user first sets up a list of series which 
 the program will then watch for.  Typically, operation of Meliman for TV series will 
-look something like this:
+look something like this::
 
     # ./meliman.py -s "The Simpsons"
     71663: The Simpsons
@@ -35,7 +42,7 @@ Note that the -m option just prints the metadata, it doesn't tag the file.
 Meliman also supports movies.  Here, because of practicality, we abandon the watch
 strategy and do a lookup against IMDb.  Most operations against series are also 
 available for movies by just capitalizing the option. Here is what operations for 
-movies look like:
+movies look like::
 
     # ./meliman.py -o "The Simpsons"
     96697: The Simpsons (1989)
@@ -66,7 +73,7 @@ Once you have started watching some TV series with Meliman, you can use Meliman 
 watch an incoming directory and copy/move media files to your library directory, 
 tagging the file with metadata in the process.  To make this work, you'll need to 
 properly setup entries in your configuration file.  These settings, in particular, 
-are important:
+are important::
 
     input_path=/src/meliman/tmp/input
     movie_input_path=/src/meliman/tmp/movie_input
@@ -75,7 +82,7 @@ are important:
     recent_path=/src/meliman/tmp/recent
 
 Once you are properly configured, you should be able to run meliman in "process mode," 
-like this:
+like this::
 
     # ./meliman.py -p
     Skipping file '/src/meliman/tmp/input/the_simpsons_s5e8.avi'.  
@@ -95,62 +102,63 @@ don't match a watched series title or those files which don't match a real episo
 of a given series.
 
 More information about running Meliman can be found in the template configuration
-file and using meliman's help option:
+file and using meliman's help option::
 
     # ./meliman.py --help
 
 
 Feature list:
-    - Lookup series from thetvdb.com based on a search string
-    - Lookup episodes from thetvdb.com based on a search string
-    - Lookup movies from imdb.com based on a search string
-    - Caches movies, series and episode data locally to prevent frequent network access
-    - Generates cleaned-up file names for media files based on metadata
-    - Generates metadata for media files
-    - Manages a library directory structured by series name, seasons and episode numbers
-    - Generates Genre folders for series and movies 
-    - Watches an incoming directory for new media files and copies those files to 
+    * Lookup series from thetvdb.com based on a search string
+    * Lookup episodes from thetvdb.com based on a search string
+    * Lookup movies from imdb.com based on a search string
+    * Caches movies, series and episode data locally to prevent frequent network access
+    * Generates cleaned-up file names for media files based on metadata
+    * Generates metadata for media files
+    * Manages a library directory structured by series name, seasons and episode numbers
+    * Generates Genre folders for series and movies 
+    * Watches an incoming directory for new media files and copies those files to 
         the library, properly tagging and naming those files
-    - Maintains a list of recently added media files in the library
+    * Maintains a list of recently added media files in the library
 
 Planned improvements:
-    - Arbitrary media file tagging (not using -p or the generate options)
-    - Support more metadata formats (like mp4 file tagging for AppleTV)
-    - Ability to run meliman as a server
-    - A web-based GUI
+    * Arbitrary media file tagging (not using -p or the generate options)
+    * Support more metadata formats (like mp4 file tagging for AppleTV)
+    * Ability to run meliman as a server
+    * A web-based GUI
 
 
-== INSTALLATION ==
+INSTALLATION
+============ 
 
 Requirements: 
-    - Python 2.5 or greater (w://www.python.org)
+    * Python 2.5 or greater (w://www.python.org)
         Python 3000 will almost surely not work.
-    - imdbpy (w://imdbpy.sourceforge.net/)
+    * imdbpy (w://imdbpy.sourceforge.net/)
         The easiest way to get imdbpy is probably through setup tools/easy_install.  
         Get setup tools here: w://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
         Once you've installed easy_install, install imdbpy using:
             easy_install imdbpy
         You may need to run this with sudo or otherwise escalate your priviledges.
-    - A unix-like OS
+    * A unix-like OS
         While some effort was made to make meliman cross-platform, it has never
         been tested on Windows.  It should run fine on Linux and Mac OS X and
         has been tested on these systems.  Any help in ensuring meliman is truly
         cross platform would be appreciated.
 
 Installation of Meliman is pretty simple:
-    - Put the Meliman folder wherever you like on your computer (referred to from
+    * Put the Meliman folder wherever you like on your computer (referred to from
         here on as INSTALL_PATH).
-    - Create a db file for local caching:
+    * Create a db file for local caching:
         cd INSTALL_PATH
         python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
-    - Create a config file for the application:
+    * Create a config file for the application:
         cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
-    - Edit the config file to point to your db file and the various directories you want to 
+    * Edit the config file to point to your db file and the various directories you want to 
         use on your computer.  The example config file is well documented to help you make
         sensible settings.
 
 Once you have installed the application, you can immediately use the meliman.py 
-script to operate the program.  Execute the follwing for more information:
+script to operate the program.  Execute the follwing for more information::
 
     INSTALL_PATH/meliman.py --help
 
