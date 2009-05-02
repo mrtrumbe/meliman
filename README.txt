@@ -123,10 +123,11 @@ Planned improvements:
 == INSTALLATION ==
 
 Requirements: 
-    - Python 2.5 (http://www.python.org)
-    - imdbpy (http://imdbpy.sourceforge.net/)
+    - Python 2.5 or greater (w://www.python.org)
+        Python 3000 will almost surely not work.
+    - imdbpy (w://imdbpy.sourceforge.net/)
         The easiest way to get imdbpy is probably through setup tools/easy_install.  
-        Get setup tools here: http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
+        Get setup tools here: w://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions
         Once you've installed easy_install, install imdbpy using:
             easy_install imdbpy
         You may need to run this with sudo or otherwise escalate your priviledges.
