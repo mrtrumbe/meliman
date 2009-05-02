@@ -150,11 +150,13 @@ Procedure
 First, put the Meliman folder wherever you like on your computer (referred to from
 here on as INSTALL_PATH).
 
-Next, create a db file for local caching::
+Next, create a db file for 
+local caching::
     cd INSTALL_PATH; 
     python ./scripts/syncdb.py -t HEAD /path/to/new/or/existing/db/file
 
-Now create a config file for the application::
+Now create a config file for 
+the application::
     cp INSTALL_PATH/Meliman.conf.dist INSTALL_PATH/Meliman.conf
 
 Finally, edit the config file to point to your db file and the various directories you 
